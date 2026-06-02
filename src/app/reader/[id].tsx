@@ -11,6 +11,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown, SlideInUp, SlideOutDown, SlideOutUp } from 'react-native-reanimated';
 
 import { EmptyState } from '@/components';
+import { AiSummarySheet, useAiSummary } from '@/features/ai-summary';
 import { BookmarksSheet, useBookmarks } from '@/features/bookmarks';
 import {
   DrawingCanvas,
@@ -34,11 +35,13 @@ export default function ReaderScreen() {
   const bookmarks = useBookmarks(reader.document?.id);
   const notes = useNotes(reader.document?.id);
   const drawing = useDrawing(reader.document?.id, reader.page);
+  const ai = useAiSummary(reader.document);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [bookmarksVisible, setBookmarksVisible] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
   const [pagesVisible, setPagesVisible] = useState(false);
+  const [aiVisible, setAiVisible] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
   const [penTool, setPenTool] = useState<PenTool>('pen');
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
@@ -83,6 +86,11 @@ export default function ReaderScreen() {
     setDrawMode(false);
     setChromeVisible(true);
   }, []);
+  // Opening the AI sheet kicks off generation on a cache miss (cheap when cached).
+  const openAi = useCallback(() => {
+    setAiVisible(true);
+    if (ai.configured && !ai.summary && !ai.loading) void ai.generate();
+  }, [ai]);
 
   if (reader.loading) {
     return (
@@ -162,6 +170,7 @@ export default function ReaderScreen() {
               onOpenBookmarks={() => setBookmarksVisible(true)}
               onOpenPages={() => setPagesVisible(true)}
               onEnterDraw={enterDraw}
+              onOpenAi={openAi}
             />
           </Animated.View>
         </>
@@ -216,6 +225,17 @@ export default function ReaderScreen() {
         bookmarkedPages={bookmarkedPages}
         notedPages={notedPages}
         onJump={jumpToPage}
+      />
+
+      <AiSummarySheet
+        visible={aiVisible}
+        onClose={() => setAiVisible(false)}
+        configured={ai.configured}
+        loading={ai.loading}
+        error={ai.error}
+        summary={ai.summary}
+        onGenerate={ai.generate}
+        onRegenerate={ai.regenerate}
       />
     </View>
   );

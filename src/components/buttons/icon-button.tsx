@@ -11,7 +11,7 @@ import { StyleSheet } from 'react-native';
 
 import { PressScale, type PressScaleProps } from '@/components/animations/press-scale';
 import { useTheme } from '@/hooks/use-theme';
-import { HitSlop, Opacity, Radii, glowShadow, type ThemeColor } from '@/theme';
+import { HitSlop, Opacity, Radii, type ThemeColor } from '@/theme';
 
 import { GradientView } from '../common/gradient';
 import { Icon, type IconName } from '../common/icon';
@@ -45,8 +45,10 @@ export function IconButton({
       : variant === 'tinted'
         ? colors.primarySoft
         : variant === 'glass'
-          ? colors.glassFill
-          : 'transparent';
+          ? colors.backgroundElement
+          : isGradient
+            ? colors.primary // opaque backing so the glow shadow casts under the gradient
+            : 'transparent';
   const iconColor: ThemeColor = variant === 'tinted' ? 'primary' : color;
 
   return (
@@ -60,8 +62,7 @@ export function IconButton({
       style={[
         styles.base,
         { width: size, height: size, backgroundColor: background },
-        variant === 'glass' && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
-        isGradient && !disabled && glowShadow(colors.glow, 'md'),
+        variant === 'glass' && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
         disabled && { opacity: Opacity.disabled },
         style,
       ]}

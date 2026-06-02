@@ -5,7 +5,6 @@
  * scrim fades via the native Modal transition, so open and close both feel soft.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,19 +45,11 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.glassFillStrong,
-              borderColor: colors.glassBorder,
+              backgroundColor: colors.surfaceElevated,
+              borderColor: colors.border,
               paddingBottom: insets.bottom + Spacing.four,
             },
           ]}>
-          {/* Soft brand glow at the crown of the sheet. */}
-          <LinearGradient
-            colors={[colors.gradientBrandSoft[0], 'transparent']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            pointerEvents="none"
-            style={styles.glow}
-          />
           <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />
           {title ? (
             <Text variant="title3" style={styles.title}>
@@ -84,7 +75,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     overflow: 'hidden',
   },
-  glow: { position: 'absolute', top: 0, left: 0, right: 0, height: 140 },
   handle: {
     width: 44,
     height: 5,

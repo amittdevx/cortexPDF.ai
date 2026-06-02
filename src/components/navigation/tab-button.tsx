@@ -53,12 +53,7 @@ export const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
       style={styles.item}>
       <View style={styles.iconWrap}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, pillStyle]}>
-          <GradientView
-            gradient="gradientBrand"
-            radius="pill"
-            glow={isFocused ? 'sm' : false}
-            style={StyleSheet.absoluteFill}
-          />
+          <GradientView gradient="gradientBrand" radius="pill" style={StyleSheet.absoluteFill} />
         </Animated.View>
         <Animated.View style={iconStyle}>
           <Icon

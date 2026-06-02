@@ -19,8 +19,28 @@ export interface AiCompletionOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * A document handed to the backend for analysis. Text extraction happens
+ * SERVER-SIDE (the native PDF renderer can't extract text, and we keep parsing
+ * off the client), so we send the raw bytes — never an API key.
+ */
+export interface AiDocument {
+  /** Display/file name, used for prompts and logging. */
+  name: string;
+  /** Base64-encoded file bytes. */
+  base64: string;
+}
+
 /** A provider adapter — the boundary an LLM backend is reached through. */
 export interface AiProvider {
   readonly id: string;
   complete(messages: AiMessage[], options?: AiCompletionOptions): Promise<Result<string>>;
+  /** Summarize a whole document (backend extracts the text). */
+  summarizeDocument(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<string>>;
+  /** Answer a question grounded in a document (backend extracts the text). */
+  askDocument(
+    doc: AiDocument,
+    question: string,
+    options?: AiCompletionOptions,
+  ): Promise<Result<string>>;
 }

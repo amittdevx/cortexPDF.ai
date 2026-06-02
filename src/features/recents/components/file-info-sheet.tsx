@@ -35,7 +35,7 @@ export function FileInfoSheet({
       {file ? (
         <>
           <View style={styles.header}>
-            <GradientThumb seed={file.id} size={56} radius="md" glow="sm" />
+            <GradientThumb seed={file.id} size={56} radius="md" />
             <View style={styles.headerText}>
               <Text variant="bodyMedium" numberOfLines={2}>
                 {fileNameToTitle(file.name)}

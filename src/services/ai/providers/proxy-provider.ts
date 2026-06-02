@@ -11,24 +11,50 @@
 import { AppConfig } from '@/config';
 import { err, safeAsync, type Result } from '@/utils/result';
 
-import type { AiCompletionOptions, AiMessage, AiProvider } from '../types';
+import type { AiCompletionOptions, AiDocument, AiMessage, AiProvider } from '../types';
+
+const NOT_CONFIGURED = {
+  code: 'ai/not-configured',
+  message: 'AI backend is not configured yet.',
+} as const;
 
 export class ProxyProvider implements AiProvider {
   readonly id = 'proxy';
 
-  async complete(messages: AiMessage[], _options?: AiCompletionOptions): Promise<Result<string>> {
-    if (!AppConfig.aiProxyUrl) {
-      return err({ code: 'ai/not-configured', message: 'AI backend is not configured yet.' });
-    }
+  /** POST a JSON body to a proxy endpoint and unwrap `{ content }`. */
+  private post(
+    path: string,
+    body: unknown,
+    context: string,
+    signal?: AbortSignal,
+  ): Promise<Result<string>> {
+    if (!AppConfig.aiProxyUrl) return Promise.resolve(err({ ...NOT_CONFIGURED }));
     return safeAsync(async () => {
-      const res = await fetch(`${AppConfig.aiProxyUrl}/complete`, {
+      const res = await fetch(`${AppConfig.aiProxyUrl}${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify(body),
+        signal,
       });
       if (!res.ok) throw new Error(`AI proxy returned ${res.status}`);
       const json = (await res.json()) as { content: string };
       return json.content;
-    }, 'ai/complete');
+    }, context);
+  }
+
+  complete(messages: AiMessage[], options?: AiCompletionOptions): Promise<Result<string>> {
+    return this.post('/complete', { messages }, 'ai/complete', options?.signal);
+  }
+
+  summarizeDocument(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<string>> {
+    return this.post('/summarize', { document: doc }, 'ai/summarize', options?.signal);
+  }
+
+  askDocument(
+    doc: AiDocument,
+    question: string,
+    options?: AiCompletionOptions,
+  ): Promise<Result<string>> {
+    return this.post('/ask', { document: doc, question }, 'ai/ask', options?.signal);
   }
 }

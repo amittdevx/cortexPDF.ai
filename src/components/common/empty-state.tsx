@@ -25,7 +25,7 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Empt
   return (
     <FadeIn>
       <View style={styles.container}>
-        <GradientMedallion icon={icon} size={80} radius="xl" iconSize={34} glow="md" />
+        <GradientMedallion icon={icon} size={80} radius="xl" iconSize={34} />
         <Text variant="title2" center style={styles.title}>
           {title}
         </Text>

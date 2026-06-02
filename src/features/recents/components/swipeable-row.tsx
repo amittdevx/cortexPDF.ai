@@ -31,13 +31,7 @@ function DeleteAction({ drag }: { drag: SharedValue<number> }) {
   }));
   return (
     <View style={styles.action}>
-      <GradientView
-        colors={DELETE_GRADIENT}
-        radius="xl"
-        glowColor={DELETE_GRADIENT[0]}
-        glow="sm"
-        style={StyleSheet.absoluteFill}
-      />
+      <GradientView colors={DELETE_GRADIENT} radius="xl" style={StyleSheet.absoluteFill} />
       <Animated.View style={[styles.actionInner, iconStyle]}>
         <Icon name="trash-outline" size="md" color="textOnPrimary" />
         <Text variant="caption" color="textOnPrimary" center>

@@ -46,7 +46,7 @@ export const FileCard = memo(function FileCard({
       accessibilityRole="button"
       accessibilityHint={onShowInfo ? 'Double tap to open, long press for options' : undefined}>
       <Glass variant="card" padding="three" radius="xl" style={styles.card}>
-        <GradientThumb seed={file.id} size={52} radius="md" glow="sm" />
+        <GradientThumb seed={file.id} size={52} radius="md" />
 
         <View style={styles.body}>
           <Text variant="bodyMedium" numberOfLines={1}>

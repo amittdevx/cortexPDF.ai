@@ -31,6 +31,8 @@ export interface ReaderControlsProps {
   onOpenPages: () => void;
   /** Enter freehand draw mode. */
   onEnterDraw: () => void;
+  /** Open the AI summary sheet. */
+  onOpenAi: () => void;
 }
 
 export function ReaderControls({
@@ -47,6 +49,7 @@ export function ReaderControls({
   onOpenBookmarks,
   onOpenPages,
   onEnterDraw,
+  onOpenAi,
 }: ReaderControlsProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -112,6 +115,13 @@ export function ReaderControls({
 
         <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
 
+        <IconButton
+          name="sparkles-outline"
+          variant="plain"
+          color="textSecondary"
+          accessibilityLabel="AI summary"
+          onPress={onOpenAi}
+        />
         <IconButton
           name="brush-outline"
           variant="plain"

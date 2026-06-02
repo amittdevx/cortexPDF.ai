@@ -31,7 +31,6 @@ export const ToolCard = memo(function ToolCard({ tool, onPress }: ToolCardProps)
             colors={gradientForSeed(tool.id)}
             size={48}
             radius="md"
-            glow="sm"
           />
           {soon ? (
             <View style={[styles.badge, { backgroundColor: colors.glassFillPrimary }]}>

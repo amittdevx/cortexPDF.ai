@@ -9,7 +9,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { PressScale, type PressScaleProps } from '@/components/animations/press-scale';
 import { useTheme } from '@/hooks/use-theme';
-import { Opacity, Radii, Spacing, glowShadow, type ThemeColor } from '@/theme';
+import { Opacity, Radii, Spacing, type ThemeColor } from '@/theme';
 
 import { GradientView } from '../common/gradient';
 import { Icon, type IconName } from '../common/icon';
@@ -49,8 +49,9 @@ export function Button({
   const isGradient = variant === 'primary';
 
   const bg: Record<ButtonVariant, string> = {
-    primary: 'transparent', // painted by the gradient layer
-    secondary: colors.glassFill,
+    // Opaque under the gradient layer so there's no sub-pixel gap.
+    primary: colors.primary,
+    secondary: colors.backgroundElement,
     ghost: 'transparent',
     danger: colors.danger,
   };
@@ -79,9 +80,7 @@ export function Button({
           gap: sizing.gap,
           opacity: isDisabled ? Opacity.disabled : 1,
         },
-        isGradient && !isDisabled && glowShadow(colors.glow, 'md'),
-        variant === 'danger' && !isDisabled && glowShadow(colors.danger, 'sm'),
-        variant === 'secondary' && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
+        variant === 'secondary' && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
         variant === 'ghost' && { borderWidth: 1, borderColor: colors.border },
         fullWidth && styles.fullWidth,
         style,
@@ -110,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   content: { flexDirection: 'row', alignItems: 'center' },
   fullWidth: { alignSelf: 'stretch' },

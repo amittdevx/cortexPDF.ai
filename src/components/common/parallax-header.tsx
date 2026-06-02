@@ -25,6 +25,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useTheme } from '@/hooks/use-theme';
 import { FontWeight, ScreenPadding, Spacing } from '@/theme';
 
 import { Glass } from './glass';
@@ -97,6 +98,7 @@ export function CollapsingHeaderBar({
   scrollY,
   range = [40, 104],
 }: CollapsingHeaderBarProps) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const barHeight = insets.top + 52;
 
@@ -113,7 +115,11 @@ export function CollapsingHeaderBar({
   return (
     <View pointerEvents="box-none" style={styles.barContainer}>
       <Animated.View style={anim}>
-        <Glass variant="chrome" radius="none" elevation="sm" style={[styles.bar, { paddingTop: insets.top + 6 }]}>
+        <Glass
+          variant="chrome"
+          radius="none"
+          bordered={false}
+          style={[styles.bar, { paddingTop: insets.top + 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
           <Text variant="bodyMedium" numberOfLines={1} style={styles.barTitle}>
             {title}
           </Text>

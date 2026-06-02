@@ -51,6 +51,25 @@ export async function getFileInfo(uri: string): Promise<Result<{ exists: boolean
   }, 'getFileInfo');
 }
 
+/** Read a local file as a base64 string (e.g. to upload to the AI proxy). */
+export async function readBase64(uri: string): Promise<Result<string>> {
+  return safeAsync(async () => {
+    const { File } = await import('expo-file-system');
+    return await new File(uri).base64();
+  }, 'readBase64');
+}
+
+/**
+ * A stable content hash for a file (md5). Used to key caches across re-imports of
+ * the same document. Falls back to a uri+size key when the platform can't hash.
+ */
+export async function getContentHash(uri: string, size = 0): Promise<Result<string>> {
+  return safeAsync(async () => {
+    const { File } = await import('expo-file-system');
+    return new File(uri).md5 ?? `uri:${uri}:${size}`;
+  }, 'getContentHash');
+}
+
 /** Share a local file through the OS share sheet. */
 export async function shareFile(uri: string, mimeType = PDF_MIME_TYPE): Promise<Result<void>> {
   return safeAsync(async () => {

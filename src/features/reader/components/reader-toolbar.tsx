@@ -4,7 +4,7 @@
  * with behavior arriving via props from the screen.
  */
 
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass, IconButton, Text } from '@/components';
@@ -44,9 +44,15 @@ export function ReaderToolbar({
     <Glass
       variant="chrome"
       radius="none"
-      elevation="none"
-      flat={Platform.OS === 'android'}
-      style={[styles.bar, { paddingTop: insets.top + Spacing.one }]}>
+      bordered={false}
+      style={[
+        styles.bar,
+        {
+          paddingTop: insets.top + Spacing.one,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+      ]}>
       <IconButton
         name="chevron-back"
         variant="filled"
@@ -77,7 +83,7 @@ export function ReaderToolbar({
           onPress={onOpenNotes}
         />
         {noteCount > 0 ? (
-          <View style={[styles.dot, { backgroundColor: colors.primary, borderColor: colors.glassFillStrong }]} />
+          <View style={[styles.dot, { backgroundColor: colors.primary, borderColor: colors.surfaceElevated }]} />
         ) : null}
       </View>
       <IconButton

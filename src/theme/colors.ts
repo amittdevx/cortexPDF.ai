@@ -139,9 +139,10 @@ export const lightColors: ColorScheme = {
   gradientBrand: ['#6366F1', '#9B5CF5'],
   gradientAccent: ['#9B5CF5', '#E25CC0'],
   gradientBrandSoft: ['rgba(99,102,241,0.18)', 'rgba(155,92,245,0.16)'],
-  auroraOne: ['rgba(99,102,241,0.28)', 'rgba(99,102,241,0)'],
-  auroraTwo: ['rgba(155,92,245,0.24)', 'rgba(155,92,245,0)'],
-  auroraThree: ['rgba(226,92,192,0.16)', 'rgba(226,92,192,0)'],
+  // Subtle fresh tint near the top of the canvas — clean, not glassy.
+  auroraOne: ['rgba(99,102,241,0.14)', 'rgba(99,102,241,0)'],
+  auroraTwo: ['rgba(155,92,245,0.11)', 'rgba(155,92,245,0)'],
+  auroraThree: ['rgba(226,92,192,0.07)', 'rgba(226,92,192,0)'],
   glow: 'rgba(91, 87, 242, 0.45)',
   glowStrong: '#6366F1',
 };
@@ -187,9 +188,10 @@ export const darkColors: ColorScheme = {
   gradientBrand: ['#7C83FF', '#B57BFF'],
   gradientAccent: ['#B57BFF', '#F07BD0'],
   gradientBrandSoft: ['rgba(124,131,255,0.22)', 'rgba(181,123,255,0.18)'],
-  auroraOne: ['rgba(124,131,255,0.34)', 'rgba(124,131,255,0)'],
-  auroraTwo: ['rgba(181,123,255,0.26)', 'rgba(181,123,255,0)'],
-  auroraThree: ['rgba(240,123,208,0.16)', 'rgba(240,123,208,0)'],
+  // Subtle fresh tint near the top of the canvas — clean, not glassy.
+  auroraOne: ['rgba(124,131,255,0.20)', 'rgba(124,131,255,0)'],
+  auroraTwo: ['rgba(181,123,255,0.15)', 'rgba(181,123,255,0)'],
+  auroraThree: ['rgba(240,123,208,0.10)', 'rgba(240,123,208,0)'],
   glow: 'rgba(124, 131, 255, 0.55)',
   glowStrong: '#7C83FF',
 };
