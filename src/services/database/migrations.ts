@@ -47,4 +47,28 @@ export const migrations: string[] = [
   );
   CREATE INDEX IF NOT EXISTS idx_annotations_pdf_page ON annotations (pdf_id, page);
   `,
+
+  // v2 — AI text cache (extract-once) + generic AI result cache
+  `
+  CREATE TABLE IF NOT EXISTS doc_text_meta (
+    file_hash     TEXT PRIMARY KEY NOT NULL,
+    total_pages   INTEGER NOT NULL DEFAULT 0,
+    scanned       INTEGER NOT NULL DEFAULT 0,
+    extracted_at  INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS page_text (
+    file_hash   TEXT NOT NULL,
+    page        INTEGER NOT NULL,
+    text        TEXT NOT NULL,
+    PRIMARY KEY (file_hash, page)
+  );
+
+  CREATE TABLE IF NOT EXISTS ai_results (
+    cache_key   TEXT PRIMARY KEY NOT NULL,
+    task        TEXT NOT NULL,
+    content     TEXT NOT NULL,
+    created_at  INTEGER NOT NULL
+  );
+  `,
 ];

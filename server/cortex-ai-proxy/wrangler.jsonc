@@ -1,0 +1,11 @@
+{
+  // CortexPDF AI proxy — Cloudflare Worker config.
+  // Deploy: `npx wrangler deploy`. Set the key: `npx wrangler secret put GEMINI_API_KEY`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cortex-ai-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-01-01",
+  "observability": {
+    "enabled": true
+  }
+}

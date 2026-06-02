@@ -11,7 +11,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown, SlideInUp, SlideOutDown, SlideOutUp } from 'react-native-reanimated';
 
 import { EmptyState } from '@/components';
-import { AiSummarySheet, useAiSummary } from '@/features/ai-summary';
+import { AiMenuSheet, useAiTasks } from '@/features/ai';
 import { BookmarksSheet, useBookmarks } from '@/features/bookmarks';
 import {
   DrawingCanvas,
@@ -42,7 +42,7 @@ export default function ReaderScreen() {
   const bookmarks = useBookmarks(reader.document?.id);
   const notes = useNotes(reader.document?.id);
   const drawing = useDrawing(reader.document?.id, reader.page);
-  const ai = useAiSummary(reader.document);
+  const ai = useAiTasks(reader.document, reader.page);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [bookmarksVisible, setBookmarksVisible] = useState(false);
@@ -95,10 +95,10 @@ export default function ReaderScreen() {
     setDrawMode(false);
     setChromeVisible(!readingMode);
   }, [readingMode]);
-  // Opening the AI sheet kicks off generation on a cache miss (cheap when cached).
+  // Opening the AI menu pre-extracts the document text (cheap on a cache hit).
   const openAi = useCallback(() => {
     setAiVisible(true);
-    if (ai.configured && !ai.summary && !ai.loading) void ai.generate();
+    ai.prepare();
   }, [ai]);
 
   if (reader.loading) {
@@ -245,15 +245,18 @@ export default function ReaderScreen() {
         onJump={jumpToPage}
       />
 
-      <AiSummarySheet
+      <AiMenuSheet
         visible={aiVisible}
         onClose={() => setAiVisible(false)}
         configured={ai.configured}
+        extracting={ai.extracting}
         loading={ai.loading}
         error={ai.error}
-        summary={ai.summary}
-        onGenerate={ai.generate}
+        content={ai.content}
+        activeTask={ai.activeTask}
+        onRunTask={ai.runTask}
         onRegenerate={ai.regenerate}
+        onReset={ai.reset}
       />
 
       <ReaderOptionsSheet

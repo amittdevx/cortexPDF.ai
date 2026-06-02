@@ -11,7 +11,15 @@
 import { AppConfig } from '@/config';
 import { err, safeAsync, type Result } from '@/utils/result';
 
-import type { AiCompletionOptions, AiDocument, AiMessage, AiProvider } from '../types';
+import type {
+  AiCompletionOptions,
+  AiDocument,
+  AiMessage,
+  AiProvider,
+  AiTask,
+  AiTaskParams,
+  ExtractResult,
+} from '../types';
 
 const NOT_CONFIGURED = {
   code: 'ai/not-configured',
@@ -21,13 +29,13 @@ const NOT_CONFIGURED = {
 export class ProxyProvider implements AiProvider {
   readonly id = 'proxy';
 
-  /** POST a JSON body to a proxy endpoint and unwrap `{ content }`. */
-  private post(
+  /** POST a JSON body to a proxy endpoint and return the parsed JSON as `T`. */
+  private postJson<T>(
     path: string,
     body: unknown,
     context: string,
     signal?: AbortSignal,
-  ): Promise<Result<string>> {
+  ): Promise<Result<T>> {
     if (!AppConfig.aiProxyUrl) return Promise.resolve(err({ ...NOT_CONFIGURED }));
     return safeAsync(async () => {
       const res = await fetch(`${AppConfig.aiProxyUrl}${path}`, {
@@ -36,18 +44,33 @@ export class ProxyProvider implements AiProvider {
         body: JSON.stringify(body),
         signal,
       });
-      if (!res.ok) throw new Error(`AI proxy returned ${res.status}`);
-      const json = (await res.json()) as { content: string };
-      return json.content;
+      if (!res.ok) {
+        const detail = (await res.json().catch(() => null)) as
+          | { error?: { message?: string } }
+          | null;
+        throw new Error(detail?.error?.message ?? `AI proxy returned ${res.status}`);
+      }
+      return (await res.json()) as T;
     }, context);
   }
 
+  /** POST and unwrap `{ content }`. */
+  private async postContent(
+    path: string,
+    body: unknown,
+    context: string,
+    signal?: AbortSignal,
+  ): Promise<Result<string>> {
+    const result = await this.postJson<{ content: string }>(path, body, context, signal);
+    return result.ok ? { ok: true, value: result.value.content } : result;
+  }
+
   complete(messages: AiMessage[], options?: AiCompletionOptions): Promise<Result<string>> {
-    return this.post('/complete', { messages }, 'ai/complete', options?.signal);
+    return this.postContent('/complete', { messages }, 'ai/complete', options?.signal);
   }
 
   summarizeDocument(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<string>> {
-    return this.post('/summarize', { document: doc }, 'ai/summarize', options?.signal);
+    return this.postContent('/summarize', { document: doc }, 'ai/summarize', options?.signal);
   }
 
   askDocument(
@@ -55,6 +78,19 @@ export class ProxyProvider implements AiProvider {
     question: string,
     options?: AiCompletionOptions,
   ): Promise<Result<string>> {
-    return this.post('/ask', { document: doc, question }, 'ai/ask', options?.signal);
+    return this.postContent('/ask', { document: doc, question }, 'ai/ask', options?.signal);
+  }
+
+  extract(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<ExtractResult>> {
+    return this.postJson<ExtractResult>('/extract', { document: doc }, 'ai/extract', options?.signal);
+  }
+
+  runTask(
+    task: AiTask,
+    text: string,
+    params?: AiTaskParams,
+    options?: AiCompletionOptions,
+  ): Promise<Result<string>> {
+    return this.postContent('/ai', { task, text, params: params ?? {} }, 'ai/runTask', options?.signal);
   }
 }

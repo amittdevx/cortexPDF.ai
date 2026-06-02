@@ -7,9 +7,25 @@ import { AppConfig } from '@/config';
 import { type Result } from '@/utils/result';
 
 import { ProxyProvider } from './providers/proxy-provider';
-import type { AiCompletionOptions, AiDocument, AiProvider } from './types';
+import type {
+  AiCompletionOptions,
+  AiDocument,
+  AiProvider,
+  AiTask,
+  AiTaskParams,
+  ExtractResult,
+} from './types';
 
-export type { AiMessage, AiProvider, AiCompletionOptions, AiDocument } from './types';
+export type {
+  AiMessage,
+  AiProvider,
+  AiCompletionOptions,
+  AiDocument,
+  AiTask,
+  AiTaskParams,
+  ExtractedPage,
+  ExtractResult,
+} from './types';
 
 let provider: AiProvider = new ProxyProvider();
 
@@ -38,6 +54,24 @@ export function askDocument(
   options?: AiCompletionOptions,
 ): Promise<Result<string>> {
   return provider.askDocument(doc, question, options);
+}
+
+/** Extract per-page text from a document — sent ONCE per file, then cached. */
+export function extractDocument(
+  doc: AiDocument,
+  options?: AiCompletionOptions,
+): Promise<Result<ExtractResult>> {
+  return provider.extract(doc, options);
+}
+
+/** Run a named task over already-extracted text. */
+export function runTask(
+  task: AiTask,
+  text: string,
+  params?: AiTaskParams,
+  options?: AiCompletionOptions,
+): Promise<Result<string>> {
+  return provider.runTask(task, text, params, options);
 }
 
 /** Summarize document text into a concise overview. */
