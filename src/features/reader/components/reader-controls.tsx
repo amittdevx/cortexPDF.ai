@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass, IconButton, PressScale, Text } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme';
-import type { ReaderScrollMode } from '@/store/reader.store';
 
 import { ZOOM } from '../hooks/use-reader';
 
@@ -18,13 +17,13 @@ export interface ReaderControlsProps {
   page: number;
   totalPages: number | null;
   zoom: number;
-  scrollMode: ReaderScrollMode;
   onPrev: () => void;
   onNext: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetZoom: () => void;
-  onToggleScrollMode: () => void;
+  /** Open the view-options sheet (scroll layout + reading mode). */
+  onOpenOptions: () => void;
   /** Tap the page indicator to open the bookmarks sheet. */
   onOpenBookmarks: () => void;
   /** Open the page-jump grid. */
@@ -39,13 +38,12 @@ export function ReaderControls({
   page,
   totalPages,
   zoom,
-  scrollMode,
   onPrev,
   onNext,
   onZoomIn,
   onZoomOut,
   onResetZoom,
-  onToggleScrollMode,
+  onOpenOptions,
   onOpenBookmarks,
   onOpenPages,
   onEnterDraw,
@@ -61,7 +59,7 @@ export function ReaderControls({
   const pageLabel = totalPages ? `${page} / ${totalPages}` : `${page}`;
 
   return (
-    <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.three }]}>
+    <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.one }]}>
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
         <IconButton
           name="chevron-back"
@@ -137,13 +135,11 @@ export function ReaderControls({
           onPress={onOpenPages}
         />
         <IconButton
-          name={scrollMode === 'continuous' ? 'swap-vertical' : 'documents-outline'}
+          name="options-outline"
           variant="plain"
           color="textSecondary"
-          accessibilityLabel={
-            scrollMode === 'continuous' ? 'Switch to paged scrolling' : 'Switch to continuous scrolling'
-          }
-          onPress={onToggleScrollMode}
+          accessibilityLabel="View options"
+          onPress={onOpenOptions}
         />
       </Glass>
     </View>

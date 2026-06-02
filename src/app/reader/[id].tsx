@@ -6,7 +6,7 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown, SlideInUp, SlideOutDown, SlideOutUp } from 'react-native-reanimated';
 
@@ -23,7 +23,14 @@ import {
   type PenTool,
 } from '@/features/drawing';
 import { NotesSheet, useNotes } from '@/features/notes';
-import { PagesSheet, PdfViewport, ReaderControls, ReaderToolbar, useReader } from '@/features/reader';
+import {
+  PagesSheet,
+  PdfViewport,
+  ReaderControls,
+  ReaderOptionsSheet,
+  ReaderToolbar,
+  useReader,
+} from '@/features/reader';
 import { useTheme } from '@/hooks/use-theme';
 import { ScreenPadding } from '@/theme';
 
@@ -42,6 +49,7 @@ export default function ReaderScreen() {
   const [notesVisible, setNotesVisible] = useState(false);
   const [pagesVisible, setPagesVisible] = useState(false);
   const [aiVisible, setAiVisible] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
   const [penTool, setPenTool] = useState<PenTool>('pen');
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
@@ -62,10 +70,12 @@ export default function ReaderScreen() {
 
   const goBack = useCallback(() => router.back(), [router]);
   const toggleChrome = useCallback(() => setChromeVisible((v) => !v), []);
-  const toggleScrollMode = useCallback(
-    () => reader.setScrollMode(reader.scrollMode === 'continuous' ? 'paged' : 'continuous'),
-    [reader],
-  );
+  // Reading mode is immersive: entering it hides the chrome, leaving it shows it.
+  // (Tapping the page still toggles chrome either way.)
+  const readingMode = reader.readingMode;
+  useEffect(() => {
+    setChromeVisible(!readingMode);
+  }, [readingMode]);
   const jumpToPage = useCallback(
     (targetPage: number) => {
       reader.goToPage(targetPage);
@@ -75,17 +85,16 @@ export default function ReaderScreen() {
     },
     [reader],
   );
-  // Draw mode locks to a single, non-scrolling page so the overlay maps to a
-  // stable rect; chrome is hidden in favor of the drawing toolbar.
+  // Draw mode hides the chrome for the drawing toolbar; the viewport freezes to a
+  // single page (PdfViewport handles the lock via the `frozen` prop).
   const enterDraw = useCallback(() => {
-    reader.setScrollMode('paged');
     setChromeVisible(false);
     setDrawMode(true);
-  }, [reader]);
+  }, []);
   const exitDraw = useCallback(() => {
     setDrawMode(false);
-    setChromeVisible(true);
-  }, []);
+    setChromeVisible(!readingMode);
+  }, [readingMode]);
   // Opening the AI sheet kicks off generation on a cache miss (cheap when cached).
   const openAi = useCallback(() => {
     setAiVisible(true);
@@ -129,6 +138,16 @@ export default function ReaderScreen() {
         onError={setRenderError}
       />
 
+      {/* Saved strokes stay visible over the page when not actively drawing. */}
+      {!drawMode && drawing.strokes.length > 0 ? (
+        <DrawingCanvas readOnly strokes={drawing.strokes} tool={penTool} color={penColor} width={penWidth} onCommit={drawing.addStroke} />
+      ) : null}
+
+      {/* Reading mode: a subtle warm tint for comfortable, distraction-free reading. */}
+      {readingMode && !drawMode ? (
+        <View pointerEvents="none" style={[styles.readingTint, { backgroundColor: READING_TINT }]} />
+      ) : null}
+
       {drawMode ? (
         <DrawingCanvas
           strokes={drawing.strokes}
@@ -160,13 +179,12 @@ export default function ReaderScreen() {
               page={reader.page}
               totalPages={reader.totalPages}
               zoom={reader.zoom}
-              scrollMode={reader.scrollMode}
               onPrev={reader.prevPage}
               onNext={reader.nextPage}
               onZoomIn={reader.zoomIn}
               onZoomOut={reader.zoomOut}
               onResetZoom={reader.resetZoom}
-              onToggleScrollMode={toggleScrollMode}
+              onOpenOptions={() => setOptionsVisible(true)}
               onOpenBookmarks={() => setBookmarksVisible(true)}
               onOpenPages={() => setPagesVisible(true)}
               onEnterDraw={enterDraw}
@@ -237,13 +255,26 @@ export default function ReaderScreen() {
         onGenerate={ai.generate}
         onRegenerate={ai.regenerate}
       />
+
+      <ReaderOptionsSheet
+        visible={optionsVisible}
+        onClose={() => setOptionsVisible(false)}
+        scrollMode={reader.scrollMode}
+        readingMode={reader.readingMode}
+        onScrollModeChange={reader.setScrollMode}
+        onReadingModeChange={reader.setReadingMode}
+      />
     </View>
   );
 }
+
+/** Subtle warm overlay for reading mode (works over light and dark pages). */
+const READING_TINT = 'rgba(214, 158, 74, 0.10)';
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: ScreenPadding },
   top: { position: 'absolute', top: 0, left: 0, right: 0 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  readingTint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 });

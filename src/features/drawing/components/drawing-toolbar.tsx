@@ -4,7 +4,7 @@
  * arrive via props from the reader screen, wired to the drawing hook (RULE 1).
  */
 
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Glass, Icon, IconButton, PressScale } from '@/components';
@@ -57,7 +57,11 @@ export function DrawingToolbar({
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.three }]}>
-      <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
+      <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.settingsBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.settingsContent}>
         {(['pen', 'highlighter'] as const).map((t) => {
           const selected = t === tool;
           return (
@@ -126,6 +130,7 @@ export function DrawingToolbar({
             </PressScale>
           );
         })}
+        </ScrollView>
       </Glass>
 
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
@@ -159,13 +164,21 @@ export function DrawingToolbar({
 }
 
 const styles = StyleSheet.create({
-  dock: { alignItems: 'center', gap: Spacing.two },
+  dock: { alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     gap: Spacing.two,
+  },
+  // Pen settings can exceed the screen width — scroll horizontally so nothing clips.
+  settingsBar: { maxWidth: '100%', paddingVertical: Spacing.two },
+  settingsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
   },
   toolSlot: {
     width: 34,

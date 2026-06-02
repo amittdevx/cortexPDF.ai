@@ -7,7 +7,7 @@
  * respectively.
  */
 
-import { recentsRepo } from '@/services/database';
+import { annotationsRepo, bookmarksRepo, recentsRepo } from '@/services/database';
 import { pickPdf, shareFile, type PickedDocument } from '@/services/file';
 import type { PdfFile } from '@/types/domain';
 import { err, ok, safeAsync, type Result } from '@/utils/result';
@@ -43,8 +43,17 @@ export function togglePin(file: PdfFile): Promise<Result<void>> {
   return safeAsync(() => recentsRepo.setPinned(file.id, !file.isPinned), 'recents/togglePin');
 }
 
+/**
+ * Remove a document and cascade-delete everything saved against it — notes,
+ * drawings/highlights (all annotations) and bookmarks. Data lives only while the
+ * file is in the list; deleting the file purges its sets too.
+ */
 export function remove(id: string): Promise<Result<void>> {
-  return safeAsync(() => recentsRepo.removeRecent(id), 'recents/remove');
+  return safeAsync(async () => {
+    await recentsRepo.removeRecent(id);
+    await annotationsRepo.removeForPdf(id);
+    await bookmarksRepo.removeForPdf(id);
+  }, 'recents/remove');
 }
 
 export function clearUnpinned(): Promise<Result<void>> {

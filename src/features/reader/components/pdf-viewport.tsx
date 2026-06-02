@@ -57,7 +57,11 @@ export function PdfViewport({
   onError,
 }: PdfViewportProps) {
   const { colors } = useTheme();
-  const paged = scrollMode === 'paged';
+  // continuous → vertical scroll; horizontal → free horizontal scroll;
+  // book → horizontal with page snapping. While frozen (draw mode) we force a
+  // single snapped page so the drawing overlay maps to a stable rect.
+  const horizontal = frozen || scrollMode === 'horizontal' || scrollMode === 'book';
+  const enablePaging = frozen || scrollMode === 'book';
 
   // Page prop fed to <Pdf>: only changes on a deliberate jump, never on scroll.
   const [targetPage, setTargetPage] = useState(page);
@@ -87,10 +91,10 @@ export function PdfViewport({
         scale={targetScale}
         minScale={ZOOM.min}
         maxScale={ZOOM.max}
-        horizontal={paged}
-        enablePaging={paged}
+        horizontal={horizontal}
+        enablePaging={enablePaging}
         scrollEnabled={!frozen}
-        spacing={paged ? 0 : 8}
+        spacing={enablePaging ? 0 : 8}
         fitPolicy={0 /* fit width */}
         enableAntialiasing
         enableDoubleTapZoom={false /* single-tap toggles chrome; controls own zoom */}

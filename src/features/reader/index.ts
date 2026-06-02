@@ -4,4 +4,5 @@ export { PdfViewport, type PdfViewportProps } from './components/pdf-viewport';
 export { ReaderToolbar, type ReaderToolbarProps } from './components/reader-toolbar';
 export { ReaderControls, type ReaderControlsProps } from './components/reader-controls';
 export { PagesSheet, type PagesSheetProps } from './components/pages-sheet';
+export { ReaderOptionsSheet, type ReaderOptionsSheetProps } from './components/reader-options-sheet';
 export * as readerService from './services/reader.service';

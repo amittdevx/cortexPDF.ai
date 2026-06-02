@@ -8,10 +8,10 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { SlideInDown } from 'react-native-reanimated';
+import Animated, { Easing, SlideInDown } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing, Springs } from '@/theme';
+import { Radii, Spacing } from '@/theme';
 
 import { Text } from './text';
 
@@ -41,13 +41,13 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
           onPress={onClose}
         />
         <Animated.View
-          entering={SlideInDown.springify().damping(Springs.smooth.damping).stiffness(Springs.smooth.stiffness)}
+          entering={SlideInDown.duration(260).easing(Easing.out(Easing.cubic))}
           style={[
             styles.sheet,
             {
               backgroundColor: colors.surfaceElevated,
               borderColor: colors.border,
-              paddingBottom: insets.bottom + Spacing.four,
+              paddingBottom: insets.bottom + Spacing.two,
             },
           ]}>
           <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />

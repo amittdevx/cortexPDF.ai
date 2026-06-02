@@ -35,6 +35,8 @@ export interface DrawingCanvasProps {
   width: number;
   /** Called with a finished stroke, points normalized to 0..1. */
   onCommit: (stroke: Omit<DrawStroke, 'id'>) => void;
+  /** Display committed strokes only — no gestures, lets touches pass through. */
+  readOnly?: boolean;
 }
 
 function pathFromPx(points: PxPoint[]): SkPath {
@@ -49,7 +51,14 @@ function pathFromPx(points: PxPoint[]): SkPath {
 /** Marker ink is translucent and multiplies so text underneath stays legible. */
 const isHighlighter = (tool: PenTool) => tool === 'highlighter';
 
-export function DrawingCanvas({ strokes, tool, color, width, onCommit }: DrawingCanvasProps) {
+export function DrawingCanvas({
+  strokes,
+  tool,
+  color,
+  width,
+  onCommit,
+  readOnly = false,
+}: DrawingCanvasProps) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const livePoints = useRef<PxPoint[]>([]);
   const [, redraw] = useReducer((n: number) => n + 1, 0);
@@ -109,44 +118,47 @@ export function DrawingCanvas({ strokes, tool, color, width, onCommit }: Drawing
   const liveStrokeWidth = Math.max(1, width * size.w);
   const live = isHighlighter(tool);
 
+  const canvas = (
+    <Canvas style={StyleSheet.absoluteFill}>
+      {committed.map((s) => {
+        const hl = isHighlighter(s.tool);
+        return (
+          <Path
+            key={s.id}
+            path={s.path}
+            color={s.color}
+            style="stroke"
+            strokeWidth={s.strokeWidth}
+            strokeCap={hl ? 'square' : 'round'}
+            strokeJoin="round"
+            opacity={hl ? 0.32 : 1}
+            blendMode={hl ? 'multiply' : 'srcOver'}
+          />
+        );
+      })}
+      {!readOnly && livePoints.current.length > 0 ? (
+        <Path
+          path={pathFromPx(livePoints.current)}
+          color={color}
+          style="stroke"
+          strokeWidth={liveStrokeWidth}
+          strokeCap={live ? 'square' : 'round'}
+          strokeJoin="round"
+          opacity={live ? 0.32 : 1}
+          blendMode={live ? 'multiply' : 'srcOver'}
+        />
+      ) : null}
+    </Canvas>
+  );
+
   return (
     <View
       style={StyleSheet.absoluteFill}
+      pointerEvents={readOnly ? 'none' : 'auto'}
       onLayout={(e) =>
         setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
       }>
-      <GestureDetector gesture={pan}>
-        <Canvas style={StyleSheet.absoluteFill}>
-          {committed.map((s) => {
-            const hl = isHighlighter(s.tool);
-            return (
-              <Path
-                key={s.id}
-                path={s.path}
-                color={s.color}
-                style="stroke"
-                strokeWidth={s.strokeWidth}
-                strokeCap={hl ? 'square' : 'round'}
-                strokeJoin="round"
-                opacity={hl ? 0.32 : 1}
-                blendMode={hl ? 'multiply' : 'srcOver'}
-              />
-            );
-          })}
-          {livePoints.current.length > 0 ? (
-            <Path
-              path={pathFromPx(livePoints.current)}
-              color={color}
-              style="stroke"
-              strokeWidth={liveStrokeWidth}
-              strokeCap={live ? 'square' : 'round'}
-              strokeJoin="round"
-              opacity={live ? 0.32 : 1}
-              blendMode={live ? 'multiply' : 'srcOver'}
-            />
-          ) : null}
-        </Canvas>
-      </GestureDetector>
+      {readOnly ? canvas : <GestureDetector gesture={pan}>{canvas}</GestureDetector>}
     </View>
   );
 }

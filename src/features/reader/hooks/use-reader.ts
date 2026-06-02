@@ -29,6 +29,8 @@ export interface UseReaderResult {
   totalPages: number | null;
   zoom: number;
   scrollMode: ReaderScrollMode;
+  /** Immersive reading mode (per-document, persisted). */
+  readingMode: boolean;
   loading: boolean;
   error: string | null;
 
@@ -40,6 +42,7 @@ export interface UseReaderResult {
   setZoom: (zoom: number) => void;
   resetZoom: () => void;
   setScrollMode: (mode: ReaderScrollMode) => void;
+  setReadingMode: (on: boolean) => void;
   /** Called by the renderer once it knows the page count; persists it. */
   reportPageCount: (count: number) => void;
   share: () => void;
@@ -50,14 +53,16 @@ export function useReader(id: string | undefined): UseReaderResult {
   const document = useReaderStore((s) => s.currentPdf);
   const page = useReaderStore((s) => s.currentPage);
   const zoom = useReaderStore((s) => s.zoom);
-  const scrollMode = useReaderStore((s) => s.settings.scrollMode);
-  const keepAwake = useReaderStore((s) => s.settings.keepAwake);
+  const scrollMode = useReaderStore((s) => s.scrollMode);
+  const readingMode = useReaderStore((s) => s.readingMode);
+  const keepAwake = useReaderStore((s) => s.keepAwake);
 
   const openDocument = useReaderStore((s) => s.openDocument);
   const closeDocument = useReaderStore((s) => s.closeDocument);
   const setPage = useReaderStore((s) => s.setPage);
   const setZoomState = useReaderStore((s) => s.setZoom);
-  const updateSettings = useReaderStore((s) => s.updateSettings);
+  const setScrollModeState = useReaderStore((s) => s.setScrollMode);
+  const setReadingModeState = useReaderStore((s) => s.setReadingMode);
 
   const [loading, setLoading] = useState(!document || document.id !== id);
   const [error, setError] = useState<string | null>(null);
@@ -100,14 +105,15 @@ export function useReader(id: string | undefined): UseReaderResult {
     };
   }, [id, document, openDocument]);
 
-  // Keep the screen awake while reading, when the preference is on.
+  // Keep the screen awake while reading — when the preference is on, or always in
+  // immersive reading mode.
   useEffect(() => {
-    if (!keepAwake) return;
+    if (!keepAwake && !readingMode) return;
     activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
     return () => {
       deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {});
     };
-  }, [keepAwake]);
+  }, [keepAwake, readingMode]);
 
   const goToPage = useCallback(
     (next: number) => {
@@ -129,8 +135,12 @@ export function useReader(id: string | undefined): UseReaderResult {
   const resetZoom = useCallback(() => setZoomState(1), [setZoomState]);
 
   const setScrollMode = useCallback(
-    (mode: ReaderScrollMode) => updateSettings({ scrollMode: mode }),
-    [updateSettings],
+    (mode: ReaderScrollMode) => setScrollModeState(mode),
+    [setScrollModeState],
+  );
+  const setReadingMode = useCallback(
+    (on: boolean) => setReadingModeState(on),
+    [setReadingModeState],
   );
 
   const reportPageCount = useCallback(
@@ -156,6 +166,7 @@ export function useReader(id: string | undefined): UseReaderResult {
     totalPages,
     zoom,
     scrollMode,
+    readingMode,
     loading,
     error,
     goToPage,
@@ -166,6 +177,7 @@ export function useReader(id: string | undefined): UseReaderResult {
     setZoom,
     resetZoom,
     setScrollMode,
+    setReadingMode,
     reportPageCount,
     share,
     close,

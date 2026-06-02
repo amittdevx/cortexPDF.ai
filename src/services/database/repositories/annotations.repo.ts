@@ -81,3 +81,10 @@ export async function removeAnnotation(id: string): Promise<void> {
   if (!db) return;
   await db.runAsync('DELETE FROM annotations WHERE id = ?', id);
 }
+
+/** Remove every annotation belonging to a document (cascade on file delete). */
+export async function removeForPdf(pdfId: string): Promise<void> {
+  const db = await getDatabase();
+  if (!db) return;
+  await db.runAsync('DELETE FROM annotations WHERE pdf_id = ?', pdfId);
+}
