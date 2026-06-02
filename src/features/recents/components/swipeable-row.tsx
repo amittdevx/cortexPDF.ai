@@ -17,22 +17,27 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { Icon, Text } from '@/components';
-import { useTheme } from '@/hooks/use-theme';
+import { GradientView, Icon, Text } from '@/components';
 import { haptics } from '@/services/haptics';
 import { Duration, Radii, Spacing } from '@/theme';
 
-const ACTION_WIDTH = Spacing.six; // 64
+const ACTION_WIDTH = 76;
+const DELETE_GRADIENT = ['#FB7185', '#E11D74'] as const;
 
 function DeleteAction({ drag }: { drag: SharedValue<number> }) {
-  const { colors } = useTheme();
   const iconStyle = useAnimatedStyle(() => ({
     opacity: interpolate(drag.value, [-ACTION_WIDTH, 0], [1, 0]),
     transform: [{ scale: interpolate(drag.value, [-ACTION_WIDTH, 0], [1, 0.6]) }],
   }));
   return (
-    <View style={[styles.action, { backgroundColor: colors.danger }]}>
-      <View pointerEvents="none" style={[styles.rim, { backgroundColor: colors.glassHighlight }]} />
+    <View style={styles.action}>
+      <GradientView
+        colors={DELETE_GRADIENT}
+        radius="xl"
+        glowColor={DELETE_GRADIENT[0]}
+        glow="sm"
+        style={StyleSheet.absoluteFill}
+      />
       <Animated.View style={[styles.actionInner, iconStyle]}>
         <Icon name="trash-outline" size="md" color="textOnPrimary" />
         <Text variant="caption" color="textOnPrimary" center>
@@ -66,16 +71,8 @@ const styles = StyleSheet.create({
     width: ACTION_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radii.lg,
+    borderRadius: Radii.xl,
+    marginLeft: Spacing.two,
   },
   actionInner: { alignItems: 'center', gap: Spacing.half },
-  rim: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1.5,
-    borderTopLeftRadius: Radii.lg,
-    borderTopRightRadius: Radii.lg,
-  },
 });

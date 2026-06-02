@@ -35,6 +35,10 @@ export const Springs = {
   bouncy: { damping: 14, stiffness: 200, mass: 0.9 } satisfies WithSpringConfig,
   /** Smooth — large surfaces like sheets gliding in. */
   smooth: { damping: 30, stiffness: 220, mass: 1 } satisfies WithSpringConfig,
+  /** Fluid — the premium default: glides with a whisper of overshoot, no jolt. */
+  fluid: { damping: 24, stiffness: 210, mass: 0.95 } satisfies WithSpringConfig,
+  /** Lazy — heavy, slow settle for parallax / collapsing headers. */
+  lazy: { damping: 40, stiffness: 140, mass: 1.1 } satisfies WithSpringConfig,
 } as const;
 
 /** Timing presets pairing a duration with an easing. */

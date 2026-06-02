@@ -6,11 +6,20 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing, type ThemeColor } from '@/theme';
+import { Spacing, type Gradient, type ThemeColor } from '@/theme';
 
-import { Icon, type IconName } from './icon';
+import { GradientMedallion } from './gradient';
+import { type IconName } from './icon';
 import { Text } from './text';
+
+/** Map an accent role to a vivid gradient for the leading medallion. */
+const ROLE_GRADIENT: Partial<Record<ThemeColor, Gradient>> = {
+  primary: ['#6366F1', '#9B5CF5'],
+  accent: ['#9B5CF5', '#E25CC0'],
+  success: ['#10B981', '#84CC16'],
+  warning: ['#F59E0B', '#F43F5E'],
+  danger: ['#F43F5E', '#EC4899'],
+};
 
 export interface SettingRowProps {
   icon: IconName;
@@ -31,13 +40,16 @@ export function SettingRow({
   trailing,
   below,
 }: SettingRowProps) {
-  const { colors } = useTheme();
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <View style={[styles.medallion, { backgroundColor: colors[iconColor] + '22' }]}>
-          <Icon name={icon} size="md" color={iconColor} />
-        </View>
+        <GradientMedallion
+          icon={icon}
+          colors={ROLE_GRADIENT[iconColor]}
+          size={38}
+          radius="sm"
+          iconSize={18}
+        />
         <View style={styles.text}>
           <Text variant="bodyMedium">{title}</Text>
           {subtitle ? (
@@ -56,13 +68,6 @@ export function SettingRow({
 const styles = StyleSheet.create({
   container: { paddingVertical: Spacing.two },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  medallion: {
-    width: 36,
-    height: 36,
-    borderRadius: Radii.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   text: { flex: 1, gap: 1 },
   below: { marginTop: Spacing.three },
 });

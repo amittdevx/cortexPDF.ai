@@ -31,6 +31,8 @@ export interface PdfViewportProps {
   /** Controlled zoom — driven by the zoom controls. */
   zoom: number;
   scrollMode: ReaderScrollMode;
+  /** Freeze scrolling (draw mode) so an overlay maps to a stable page rect. */
+  frozen?: boolean;
   /** Renderer reported a new zoom (pinch). */
   onZoomChange: (zoom: number) => void;
   /** Renderer scrolled/paged to a different page. */
@@ -47,6 +49,7 @@ export function PdfViewport({
   page,
   zoom,
   scrollMode,
+  frozen = false,
   onZoomChange,
   onPageChange,
   onLoadComplete,
@@ -86,6 +89,7 @@ export function PdfViewport({
         maxScale={ZOOM.max}
         horizontal={paged}
         enablePaging={paged}
+        scrollEnabled={!frozen}
         spacing={paged ? 0 : 8}
         fitPolicy={0 /* fit width */}
         enableAntialiasing

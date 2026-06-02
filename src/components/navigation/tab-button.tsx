@@ -1,7 +1,8 @@
 /**
  * TabButton — the custom, animated tab item rendered inside the headless
- * `TabTrigger asChild`. When focused, a soft pill springs in behind the icon and
- * the icon swaps to its filled variant — "felt, not noticed" motion on the UI
+ * `TabTrigger asChild`. When focused, a glowing brand-gradient pill springs in
+ * behind the icon, the icon swaps to its filled variant and turns white, and the
+ * label brightens to the brand color — "felt, not noticed" motion on the UI
  * thread. Forwards its ref so the router can drive navigation.
  */
 
@@ -13,10 +14,10 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { GradientView } from '@/components/common/gradient';
 import { Icon, type IconName } from '@/components/common/icon';
 import { Text } from '@/components/common/text';
-import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing, Springs } from '@/theme';
+import { Spacing, Springs } from '@/theme';
 
 export interface TabButtonProps {
   icon: IconName;
@@ -32,16 +33,15 @@ export const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
   { icon, iconFocused, label, isFocused = false, ...pressProps },
   ref,
 ) {
-  const { colors } = useTheme();
   const progress = useDerivedValue(() => withSpring(isFocused ? 1 : 0, Springs.gentle));
 
   const pillStyle = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ scale: 0.6 + progress.value * 0.4 }],
+    transform: [{ scale: 0.55 + progress.value * 0.45 }],
   }));
 
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -progress.value * 2 }, { scale: 0.96 + progress.value * 0.04 }],
+    transform: [{ translateY: -progress.value * 2 }, { scale: 0.94 + progress.value * 0.06 }],
   }));
 
   return (
@@ -52,15 +52,19 @@ export const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
       accessibilityState={{ selected: isFocused }}
       style={styles.item}>
       <View style={styles.iconWrap}>
-        <Animated.View
-          pointerEvents="none"
-          style={[styles.pill, { backgroundColor: colors.glassFillPrimary }, pillStyle]}
-        />
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, pillStyle]}>
+          <GradientView
+            gradient="gradientBrand"
+            radius="pill"
+            glow={isFocused ? 'sm' : false}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
         <Animated.View style={iconStyle}>
           <Icon
             name={isFocused ? iconFocused : icon}
-            size="lg"
-            color={isFocused ? 'primary' : 'textTertiary'}
+            size="md"
+            color={isFocused ? 'textOnPrimary' : 'textTertiary'}
           />
         </Animated.View>
       </View>
@@ -80,17 +84,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   iconWrap: {
-    width: 60,
+    width: 56,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  pill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: Radii.pill,
   },
 });

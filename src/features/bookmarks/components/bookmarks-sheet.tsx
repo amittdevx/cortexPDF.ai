@@ -6,8 +6,7 @@
 
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BottomSheet, Button, IconButton, PressScale, Text } from '@/components';
-import { useTheme } from '@/hooks/use-theme';
+import { BottomSheet, Button, GradientView, IconButton, PressScale, Text } from '@/components';
 import { Radii, Spacing } from '@/theme';
 import type { Bookmark } from '@/types/domain';
 import { formatRelativeTime } from '@/utils/format';
@@ -33,8 +32,6 @@ export function BookmarksSheet({
   onJump,
   onRemove,
 }: BookmarksSheetProps) {
-  const { colors } = useTheme();
-
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Bookmarks">
       <Button
@@ -60,8 +57,9 @@ export function BookmarksSheet({
               accessibilityRole="button"
               accessibilityLabel={`Go to page ${b.page}`}
               style={styles.row}>
-              <View style={[styles.pageChip, { backgroundColor: colors.glassFillPrimary }]}>
-                <Text variant="smallBold" color="primary">
+              <View style={styles.pageChip}>
+                <GradientView gradient="gradientBrand" radius="sm" style={StyleSheet.absoluteFill} />
+                <Text variant="smallBold" color="textOnPrimary">
                   {b.page}
                 </Text>
               </View>
@@ -93,12 +91,13 @@ const styles = StyleSheet.create({
   listContent: { gap: Spacing.two, paddingVertical: Spacing.one },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   pageChip: {
-    minWidth: 40,
-    height: 40,
+    minWidth: 42,
+    height: 42,
     paddingHorizontal: Spacing.two,
     borderRadius: Radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   rowBody: { flex: 1, gap: Spacing.half },
 });

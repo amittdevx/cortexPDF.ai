@@ -53,3 +53,20 @@ export const Shadows = {
   light: lightShadows,
   dark: darkShadows,
 } as const;
+
+/**
+ * A colored "glow" shadow for premium accent elements (the FAB, active tab,
+ * primary buttons). iOS renders the colored shadow directly; Android elevation
+ * can't be tinted, so callers should pair this with a gradient rim/border for a
+ * comparable halo. `strength` scales the spread + opacity.
+ */
+export function glowShadow(color: string, strength: 'sm' | 'md' | 'lg' = 'md'): ShadowStyle {
+  const r = strength === 'sm' ? 12 : strength === 'lg' ? 28 : 20;
+  const y = strength === 'sm' ? 4 : strength === 'lg' ? 12 : 8;
+  const elevation = strength === 'sm' ? 4 : strength === 'lg' ? 14 : 9;
+  return Platform.select<ShadowStyle>({
+    ios: { shadowColor: color, shadowOffset: { width: 0, height: y }, shadowOpacity: 0.9, shadowRadius: r },
+    android: { elevation, shadowColor: color },
+    default: { shadowColor: color, shadowOffset: { width: 0, height: y }, shadowOpacity: 0.9, shadowRadius: r },
+  })!;
+}

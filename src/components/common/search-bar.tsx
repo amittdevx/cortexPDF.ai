@@ -24,8 +24,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search', onClear
   const { colors } = useTheme();
 
   return (
-    <Glass variant="search" radius="md" style={styles.container}>
-      <Icon name="search" size="md" color="textTertiary" />
+    <Glass variant="search" radius="lg" style={styles.container}>
+      <Icon name="search" size="md" color="primary" />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -59,8 +59,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     paddingHorizontal: Spacing.three,
-    height: 44,
-    borderRadius: Radii.md,
+    height: 50,
+    borderRadius: Radii.lg,
   },
   input: { flex: 1, paddingVertical: 0 },
 });

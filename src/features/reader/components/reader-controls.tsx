@@ -27,6 +27,10 @@ export interface ReaderControlsProps {
   onToggleScrollMode: () => void;
   /** Tap the page indicator to open the bookmarks sheet. */
   onOpenBookmarks: () => void;
+  /** Open the page-jump grid. */
+  onOpenPages: () => void;
+  /** Enter freehand draw mode. */
+  onEnterDraw: () => void;
 }
 
 export function ReaderControls({
@@ -41,6 +45,8 @@ export function ReaderControls({
   onResetZoom,
   onToggleScrollMode,
   onOpenBookmarks,
+  onOpenPages,
+  onEnterDraw,
 }: ReaderControlsProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -106,6 +112,20 @@ export function ReaderControls({
 
         <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
 
+        <IconButton
+          name="brush-outline"
+          variant="plain"
+          color="textSecondary"
+          accessibilityLabel="Draw on page"
+          onPress={onEnterDraw}
+        />
+        <IconButton
+          name="grid-outline"
+          variant="plain"
+          color="textSecondary"
+          accessibilityLabel="Jump to page"
+          onPress={onOpenPages}
+        />
         <IconButton
           name={scrollMode === 'continuous' ? 'swap-vertical' : 'documents-outline'}
           variant="plain"

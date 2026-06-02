@@ -7,10 +7,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { FadeIn } from '@/components/animations/fade-in';
 import { Button } from '@/components/buttons/button';
-import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing } from '@/theme';
+import { GradientMedallion } from '@/components/common/gradient';
+import { Spacing } from '@/theme';
 
-import { Icon, type IconName } from './icon';
+import { type IconName } from './icon';
 import { Text } from './text';
 
 export interface EmptyStateProps {
@@ -22,14 +22,11 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, message, actionLabel, onAction }: EmptyStateProps) {
-  const { colors } = useTheme();
   return (
     <FadeIn>
       <View style={styles.container}>
-        <View style={[styles.medallion, { backgroundColor: colors.glassFillPrimary }]}>
-          <Icon name={icon} size="xl" color="primary" />
-        </View>
-        <Text variant="title3" center>
+        <GradientMedallion icon={icon} size={80} radius="xl" iconSize={34} glow="md" />
+        <Text variant="title2" center style={styles.title}>
           {title}
         </Text>
         {message ? (
@@ -38,7 +35,7 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Empt
           </Text>
         ) : null}
         {actionLabel && onAction ? (
-          <Button label={actionLabel} onPress={onAction} style={styles.action} />
+          <Button label={actionLabel} icon="add" onPress={onAction} style={styles.action} />
         ) : null}
       </View>
     </FadeIn>
@@ -47,14 +44,7 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Empt
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.six, gap: Spacing.three },
-  medallion: {
-    width: 72,
-    height: 72,
-    borderRadius: Radii.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.one,
-  },
-  message: { maxWidth: 280 },
+  title: { marginTop: Spacing.one },
+  message: { maxWidth: 300 },
   action: { marginTop: Spacing.two },
 });

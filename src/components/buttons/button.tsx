@@ -1,6 +1,7 @@
 /**
- * Button — the primary action component. Variants map to semantic color roles;
- * it inherits the spring press + haptic from PressScale. Logic-free by design:
+ * Button — the primary action component. The `primary` variant wears the brand
+ * indigo→violet gradient with a soft colored glow; the rest map to semantic
+ * roles. Inherits the spring press + haptic from PressScale. Logic-free by design:
  * pass an `onPress` handler that delegates to a hook/service (RULE 1).
  */
 
@@ -8,8 +9,9 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { PressScale, type PressScaleProps } from '@/components/animations/press-scale';
 import { useTheme } from '@/hooks/use-theme';
-import { Opacity, Radii, Spacing, type ThemeColor } from '@/theme';
+import { Opacity, Radii, Spacing, glowShadow, type ThemeColor } from '@/theme';
 
+import { GradientView } from '../common/gradient';
 import { Icon, type IconName } from '../common/icon';
 import { Text } from '../common/text';
 
@@ -44,10 +46,11 @@ export function Button({
 }: ButtonProps) {
   const { colors } = useTheme();
   const sizing = SIZE_STYLE[size];
+  const isGradient = variant === 'primary';
 
   const bg: Record<ButtonVariant, string> = {
-    primary: colors.primary,
-    secondary: colors.backgroundElement,
+    primary: 'transparent', // painted by the gradient layer
+    secondary: colors.glassFill,
     ghost: 'transparent',
     danger: colors.danger,
   };
@@ -76,11 +79,17 @@ export function Button({
           gap: sizing.gap,
           opacity: isDisabled ? Opacity.disabled : 1,
         },
+        isGradient && !isDisabled && glowShadow(colors.glow, 'md'),
+        variant === 'danger' && !isDisabled && glowShadow(colors.danger, 'sm'),
+        variant === 'secondary' && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder },
         variant === 'ghost' && { borderWidth: 1, borderColor: colors.border },
         fullWidth && styles.fullWidth,
         style,
       ]}
       {...rest}>
+      {isGradient ? (
+        <GradientView gradient="gradientBrand" radius="pill" style={StyleSheet.absoluteFill} />
+      ) : null}
       {loading ? (
         <ActivityIndicator color={colors[fg[variant]]} size="small" />
       ) : (
@@ -101,6 +110,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    overflow: 'visible',
   },
   content: { flexDirection: 'row', alignItems: 'center' },
   fullWidth: { alignSelf: 'stretch' },

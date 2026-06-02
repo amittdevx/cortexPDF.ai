@@ -6,9 +6,8 @@
 
 import { StyleSheet, View } from 'react-native';
 
-import { BottomSheet, Button, Divider, Icon, Text } from '@/components';
-import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing } from '@/theme';
+import { BottomSheet, Button, Divider, GradientThumb, Text } from '@/components';
+import { Spacing } from '@/theme';
 import type { PdfFile } from '@/types/domain';
 import { fileNameToTitle, formatBytes, formatRelativeTime } from '@/utils/format';
 
@@ -31,16 +30,12 @@ export function FileInfoSheet({
   onShare,
   onDelete,
 }: FileInfoSheetProps) {
-  const { colors } = useTheme();
-
   return (
     <BottomSheet visible={visible && !!file} onClose={onClose}>
       {file ? (
         <>
           <View style={styles.header}>
-            <View style={[styles.thumb, { backgroundColor: colors.glassFillPrimary }]}>
-              <Icon name="document-text" size="lg" color="primary" />
-            </View>
+            <GradientThumb seed={file.id} size={56} radius="md" glow="sm" />
             <View style={styles.headerText}>
               <Text variant="bodyMedium" numberOfLines={2}>
                 {fileNameToTitle(file.name)}
@@ -120,13 +115,6 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  thumb: {
-    width: 52,
-    height: 52,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerText: { flex: 1, gap: Spacing.half },
   meta: { gap: Spacing.two },
   infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

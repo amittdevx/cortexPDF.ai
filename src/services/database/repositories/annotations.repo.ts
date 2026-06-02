@@ -67,6 +67,15 @@ export async function addAnnotation(
   return record;
 }
 
+export async function updateAnnotationData(
+  id: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const db = await getDatabase();
+  if (!db) return;
+  await db.runAsync('UPDATE annotations SET data = ? WHERE id = ?', JSON.stringify(data), id);
+}
+
 export async function removeAnnotation(id: string): Promise<void> {
   const db = await getDatabase();
   if (!db) return;

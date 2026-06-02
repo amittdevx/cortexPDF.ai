@@ -8,7 +8,8 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass, IconButton, Text } from '@/components';
-import { Spacing } from '@/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { Radii, Spacing } from '@/theme';
 import { fileNameToTitle } from '@/utils/format';
 
 export interface ReaderToolbarProps {
@@ -16,8 +17,11 @@ export interface ReaderToolbarProps {
   page: number;
   totalPages: number | null;
   isBookmarked: boolean;
+  /** Notes saved on the current page (drives the indicator dot). */
+  noteCount: number;
   onBack: () => void;
   onToggleBookmark: () => void;
+  onOpenNotes: () => void;
   onShare: () => void;
 }
 
@@ -26,11 +30,14 @@ export function ReaderToolbar({
   page,
   totalPages,
   isBookmarked,
+  noteCount,
   onBack,
   onToggleBookmark,
+  onOpenNotes,
   onShare,
 }: ReaderToolbarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const meta = totalPages ? `Page ${page} of ${totalPages}` : `Page ${page}`;
 
   return (
@@ -61,6 +68,18 @@ export function ReaderToolbar({
         accessibilityLabel={isBookmarked ? 'Remove bookmark for this page' : 'Bookmark this page'}
         onPress={onToggleBookmark}
       />
+      <View>
+        <IconButton
+          name={noteCount > 0 ? 'document-text' : 'document-text-outline'}
+          color={noteCount > 0 ? 'primary' : 'text'}
+          variant="filled"
+          accessibilityLabel={noteCount > 0 ? `Notes (${noteCount} on this page)` : 'Notes'}
+          onPress={onOpenNotes}
+        />
+        {noteCount > 0 ? (
+          <View style={[styles.dot, { backgroundColor: colors.primary, borderColor: colors.glassFillStrong }]} />
+        ) : null}
+      </View>
       <IconButton
         name="share-outline"
         variant="filled"
@@ -80,4 +99,13 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.two,
   },
   titleBlock: { flex: 1, alignItems: 'center', gap: Spacing.half },
+  dot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 9,
+    height: 9,
+    borderRadius: Radii.pill,
+    borderWidth: 1.5,
+  },
 });

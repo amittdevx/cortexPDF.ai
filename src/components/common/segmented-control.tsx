@@ -1,7 +1,7 @@
 /**
- * SegmentedControl — a compact multi-option selector. The selected segment's pill
- * springs in (opacity + scale on the UI thread); switching fires a selection
- * haptic. Generic over the option value type.
+ * SegmentedControl — a compact multi-option selector. The selected segment wears
+ * a brand-gradient pill that springs in (opacity + scale on the UI thread) with
+ * white text; switching fires a selection haptic. Generic over the option value.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import { Radii, Spacing, Springs } from '@/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import { PressScale } from '../animations/press-scale';
+import { GradientView } from './gradient';
 import { Text } from './text';
 
 export interface Segment<T extends string> {
@@ -34,7 +35,7 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
 }: SegmentedControlProps<T>) {
-  const { colors, shadows } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.track, { backgroundColor: colors.backgroundElement }]}>
@@ -43,8 +44,6 @@ export function SegmentedControl<T extends string>({
           key={segment.value}
           label={segment.label}
           selected={segment.value === value}
-          surface={colors.surface}
-          shadow={shadows.sm}
           onPress={() => {
             if (segment.value !== value) {
               haptics.selection();
@@ -60,14 +59,10 @@ export function SegmentedControl<T extends string>({
 function SegmentItem({
   label,
   selected,
-  surface,
-  shadow,
   onPress,
 }: {
   label: string;
   selected: boolean;
-  surface: string;
-  shadow: object;
   onPress: () => void;
 }) {
   const progress = useDerivedValue(() => withSpring(selected ? 1 : 0, Springs.snappy));
@@ -78,11 +73,10 @@ function SegmentItem({
 
   return (
     <PressScale style={styles.segment} scaleTo={0.97} haptic="none" onPress={onPress}>
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.pill, { backgroundColor: surface }, shadow, pillStyle]}
-      />
-      <Text variant="smallBold" color={selected ? 'text' : 'textSecondary'}>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, pillStyle]}>
+        <GradientView gradient="gradientBrand" radius="sm" style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      <Text variant="smallBold" color={selected ? 'textOnPrimary' : 'textSecondary'}>
         {label}
       </Text>
     </PressScale>
@@ -102,13 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.two,
     borderRadius: Radii.sm,
-  },
-  pill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: Radii.sm,
+    overflow: 'hidden',
   },
 });

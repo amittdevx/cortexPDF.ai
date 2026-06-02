@@ -5,13 +5,14 @@
  * scrim fades via the native Modal transition, so open and close both feel soft.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing } from '@/theme';
+import { Radii, Spacing, Springs } from '@/theme';
 
 import { Text } from './text';
 
@@ -41,7 +42,7 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
           onPress={onClose}
         />
         <Animated.View
-          entering={SlideInDown.springify().damping(30)}
+          entering={SlideInDown.springify().damping(Springs.smooth.damping).stiffness(Springs.smooth.stiffness)}
           style={[
             styles.sheet,
             {
@@ -50,7 +51,15 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
               paddingBottom: insets.bottom + Spacing.four,
             },
           ]}>
-          <View style={[styles.handle, { backgroundColor: colors.glassBorder }]} />
+          {/* Soft brand glow at the crown of the sheet. */}
+          <LinearGradient
+            colors={[colors.gradientBrandSoft[0], 'transparent']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            pointerEvents="none"
+            style={styles.glow}
+          />
+          <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />
           {title ? (
             <Text variant="title3" style={styles.title}>
               {title}
@@ -73,10 +82,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
     gap: Spacing.three,
+    overflow: 'hidden',
   },
+  glow: { position: 'absolute', top: 0, left: 0, right: 0, height: 140 },
   handle: {
-    width: 40,
-    height: 4,
+    width: 44,
+    height: 5,
     borderRadius: Radii.pill,
     alignSelf: 'center',
     marginBottom: Spacing.one,

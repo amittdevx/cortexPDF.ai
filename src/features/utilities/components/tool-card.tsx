@@ -1,12 +1,13 @@
 /**
- * ToolCard — a single utility tile in the Tools grid. Presentational; the screen
- * supplies the press handler.
+ * ToolCard — a single utility tile in the Tools grid. Each tool gets a vivid
+ * gradient medallion (derived from its id) for a colorful, scannable grid.
+ * Presentational; the screen supplies the press handler.
  */
 
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Glass, Icon, PressScale, Text } from '@/components';
+import { Glass, GradientMedallion, PressScale, Text, gradientForSeed } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Radii, Spacing } from '@/theme';
 
@@ -19,21 +20,26 @@ export interface ToolCardProps {
 
 export const ToolCard = memo(function ToolCard({ tool, onPress }: ToolCardProps) {
   const { colors } = useTheme();
+  const soon = tool.status === 'soon';
 
   return (
     <PressScale style={styles.wrap} scaleTo={0.95} onPress={() => onPress(tool)}>
-      <Glass variant="card" padding="three" radius="lg" style={styles.card}>
+      <Glass variant="card" padding="three" radius="xl" style={styles.card}>
         <View style={styles.topRow}>
-          <View style={[styles.medallion, { backgroundColor: colors[tool.accent] + '22' }]}>
-            <Icon name={tool.icon} size="lg" color={tool.accent} />
-          </View>
-          {tool.status === 'soon' && (
-            <View style={[styles.badge, { backgroundColor: colors.glassFill }]}>
-              <Text variant="caption" color="textSecondary">
+          <GradientMedallion
+            icon={tool.icon}
+            colors={gradientForSeed(tool.id)}
+            size={48}
+            radius="md"
+            glow="sm"
+          />
+          {soon ? (
+            <View style={[styles.badge, { backgroundColor: colors.glassFillPrimary }]}>
+              <Text variant="captionBold" color="primary">
                 Soon
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
         <View style={styles.text}>
           <Text variant="bodyMedium">{tool.title}</Text>
@@ -48,19 +54,12 @@ export const ToolCard = memo(function ToolCard({ tool, onPress }: ToolCardProps)
 
 const styles = StyleSheet.create({
   wrap: { flex: 1 },
-  card: { gap: Spacing.three, minHeight: 132, justifyContent: 'space-between' },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  medallion: {
-    width: 48,
-    height: 48,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  card: { gap: Spacing.three, minHeight: 140, justifyContent: 'space-between' },
+  topRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   badge: {
     paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: Radii.pill,
   },
-  text: { gap: 2 },
+  text: { gap: 3 },
 });

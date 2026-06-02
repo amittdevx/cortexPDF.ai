@@ -1,20 +1,24 @@
 /**
- * Skeleton — a softly pulsing placeholder shown while content loads, so screens
- * never flash empty. Driven on the UI thread (Reanimated), so it stays smooth.
+ * Skeleton — a placeholder shown while content loads, so screens never flash
+ * empty. A specular highlight sweeps across it (a moving gradient) over a calm
+ * base tint — premium "shimmer" rather than a flat pulse. Driven on the UI thread
+ * (Reanimated), so it stays smooth.
  */
 
-import { useEffect } from 'react';
-import type { DimensionValue } from 'react-native';
+import { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, type DimensionValue } from 'react-native';
 import Animated, {
+  Easing,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/use-theme';
-import { Duration, Radii, type RadiusToken } from '@/theme';
+import { Radii, type RadiusToken } from '@/theme';
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -24,27 +28,41 @@ export interface SkeletonProps {
 
 export function Skeleton({ width = '100%', height = 16, radius = 'sm' }: SkeletonProps) {
   const { colors } = useTheme();
-  const opacity = useSharedValue(0.5);
+  const [w, setW] = useState(0);
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: Duration.slow }),
-        withTiming(0.5, { duration: Duration.slow }),
-      ),
+    progress.value = withRepeat(
+      withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.ease) }),
       -1,
-      true,
+      false,
     );
-  }, [opacity]);
+  }, [progress]);
 
-  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const sweep = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(progress.value, [0, 1], [-w, w]) }],
+  }));
 
   return (
     <Animated.View
-      style={[
-        { width, height, borderRadius: Radii[radius], backgroundColor: colors.skeleton },
-        animatedStyle,
-      ]}
-    />
+      onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      style={{
+        width,
+        height,
+        borderRadius: Radii[radius],
+        backgroundColor: colors.skeleton,
+        overflow: 'hidden',
+      }}>
+      {w > 0 ? (
+        <Animated.View style={[StyleSheet.absoluteFill, sweep]}>
+          <LinearGradient
+            colors={['transparent', colors.glassHighlight, 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      ) : null}
+    </Animated.View>
   );
 }

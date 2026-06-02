@@ -8,8 +8,25 @@ export { Text, type AppTextProps } from './common/text';
 export { Icon, type IconName, type IconProps } from './common/icon';
 export { Surface, type SurfaceProps } from './common/surface';
 export { Glass, type GlassProps, type GlassVariant } from './common/glass';
+export { AuroraBackground, type AuroraBackgroundProps } from './common/aurora-background';
+export {
+  GradientView,
+  type GradientViewProps,
+  GradientMedallion,
+  type GradientMedallionProps,
+  GradientThumb,
+  type GradientThumbProps,
+  gradientForSeed,
+} from './common/gradient';
 export { Screen, type ScreenProps } from './common/screen';
 export { ScreenHeader, type ScreenHeaderProps } from './common/screen-header';
+export {
+  useScrollHeader,
+  LargeTitleHeader,
+  type LargeTitleHeaderProps,
+  CollapsingHeaderBar,
+  type CollapsingHeaderBarProps,
+} from './common/parallax-header';
 export { EmptyState, type EmptyStateProps } from './common/empty-state';
 export { Skeleton, type SkeletonProps } from './common/skeleton';
 export { Divider } from './common/divider';

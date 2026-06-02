@@ -4,13 +4,15 @@
  * layouts. Optionally scrolls. Every screen should start here.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewProps } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
+import type { SharedValue } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/use-theme';
 import { BottomTabInset, MaxContentWidth, ScreenPadding, Spacing } from '@/theme';
+
+import { AuroraBackground } from './aurora-background';
 
 export interface ScreenProps {
   children: ReactNode;
@@ -20,8 +22,13 @@ export interface ScreenProps {
   noPadding?: boolean;
   /** Reserve space at the bottom for the floating tab bar. */
   tabBarInset?: boolean;
-  /** Paint the soft backdrop gradient wash that glass surfaces sit over. Default true. */
+  /** Paint the aurora backdrop wash that glass surfaces sit over. Default true. */
   backdrop?: boolean;
+  /** Optional scroll position — drives the aurora's parallax drift. */
+  scrollY?: SharedValue<number>;
+  /** Full-bleed overlay rendered above content (e.g. a collapsing header bar),
+   * outside the safe-area inset so it can span the status bar. */
+  overlay?: ReactNode;
   /** Safe-area edges to apply. Defaults to top only (tab bar handles bottom). */
   edges?: readonly Edge[];
   contentContainerStyle?: ScrollViewProps['contentContainerStyle'];
@@ -33,6 +40,8 @@ export function Screen({
   noPadding,
   tabBarInset,
   backdrop = true,
+  scrollY,
+  overlay,
   edges = ['top'],
   contentContainerStyle,
 }: ScreenProps) {
@@ -45,13 +54,7 @@ export function Screen({
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {backdrop ? (
-        <LinearGradient
-          colors={[colors.backdropTop, colors.backdropBottom]}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-      ) : null}
+      {backdrop ? <AuroraBackground scrollY={scrollY} /> : null}
       <SafeAreaView style={styles.safe} edges={edges}>
         <View style={styles.center}>
           {scroll ? (
@@ -67,6 +70,7 @@ export function Screen({
           )}
         </View>
       </SafeAreaView>
+      {overlay}
     </View>
   );
 }
