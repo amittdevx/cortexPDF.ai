@@ -68,7 +68,12 @@ export default function ReaderScreen() {
   );
   const notedPages = useMemo(() => new Set(notes.notes.map((n) => n.page)), [notes.notes]);
 
-  const goBack = useCallback(() => router.back(), [router]);
+  // Go back to wherever the user came from; only fall back to Library if this is
+  // the first screen (cold start / deep link) so we never dead-end.
+  const goBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }, [router]);
   const toggleChrome = useCallback(() => setChromeVisible((v) => !v), []);
   // Reading mode is immersive: entering it hides the chrome, leaving it shows it.
   // (Tapping the page still toggles chrome either way.)
@@ -140,7 +145,7 @@ export default function ReaderScreen() {
 
       {/* Saved strokes stay visible over the page when not actively drawing. */}
       {!drawMode && drawing.strokes.length > 0 ? (
-        <DrawingCanvas readOnly strokes={drawing.strokes} tool={penTool} color={penColor} width={penWidth} onCommit={drawing.addStroke} />
+        <DrawingCanvas readOnly strokes={drawing.strokes} tool={penTool} color={penColor} width={penWidth} zoom={reader.zoom} onZoomChange={reader.setZoom} onCommit={drawing.addStroke} />
       ) : null}
 
       {/* Reading mode: a subtle warm tint for comfortable, distraction-free reading. */}
@@ -154,6 +159,8 @@ export default function ReaderScreen() {
           tool={penTool}
           color={penColor}
           width={penWidth}
+          zoom={reader.zoom}
+          onZoomChange={reader.setZoom}
           onCommit={drawing.addStroke}
         />
       ) : null}
@@ -179,6 +186,7 @@ export default function ReaderScreen() {
               page={reader.page}
               totalPages={reader.totalPages}
               zoom={reader.zoom}
+              scrollMode={reader.scrollMode}
               onPrev={reader.prevPage}
               onNext={reader.nextPage}
               onZoomIn={reader.zoomIn}
@@ -271,8 +279,8 @@ export default function ReaderScreen() {
   );
 }
 
-/** Subtle warm overlay for reading mode (works over light and dark pages). */
-const READING_TINT = 'rgba(214, 158, 74, 0.10)';
+/** Warm yellowish overlay for reading mode (easy on the eyes, sepia-like). */
+const READING_TINT = 'rgba(255, 207, 102, 0.16)';
 
 const styles = StyleSheet.create({
   root: { flex: 1 },

@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass, IconButton, PressScale, Text } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme';
+import type { ReaderScrollMode } from '@/store/reader.store';
 
 import { ZOOM } from '../hooks/use-reader';
 
@@ -17,6 +18,8 @@ export interface ReaderControlsProps {
   page: number;
   totalPages: number | null;
   zoom: number;
+  /** Drives the navigation arrow direction (vertical ⌃⌄ vs horizontal ‹›). */
+  scrollMode: ReaderScrollMode;
   onPrev: () => void;
   onNext: () => void;
   onZoomIn: () => void;
@@ -38,6 +41,7 @@ export function ReaderControls({
   page,
   totalPages,
   zoom,
+  scrollMode,
   onPrev,
   onNext,
   onZoomIn,
@@ -57,12 +61,18 @@ export function ReaderControls({
   const canZoomOut = zoom > ZOOM.min + 0.001;
   const canZoomIn = zoom < ZOOM.max - 0.001;
   const pageLabel = totalPages ? `${page} / ${totalPages}` : `${page}`;
+  // Arrows follow the scroll direction: up/down for vertical, left/right otherwise.
+  const vertical = scrollMode === 'continuous';
+  const prevIcon = vertical ? 'chevron-up' : 'chevron-back';
+  const nextIcon = vertical ? 'chevron-down' : 'chevron-forward';
+  // A single-page document has nothing to jump to.
+  const showGrid = totalPages == null || totalPages > 1;
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.one }]}>
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
         <IconButton
-          name="chevron-back"
+          name={prevIcon}
           variant="plain"
           accessibilityLabel="Previous page"
           disabled={!canPrev}
@@ -77,7 +87,7 @@ export function ReaderControls({
           <Text variant="smallBold">{pageLabel}</Text>
         </PressScale>
         <IconButton
-          name="chevron-forward"
+          name={nextIcon}
           variant="plain"
           accessibilityLabel="Next page"
           disabled={!canNext}
@@ -127,13 +137,15 @@ export function ReaderControls({
           accessibilityLabel="Draw on page"
           onPress={onEnterDraw}
         />
-        <IconButton
-          name="grid-outline"
-          variant="plain"
-          color="textSecondary"
-          accessibilityLabel="Jump to page"
-          onPress={onOpenPages}
-        />
+        {showGrid ? (
+          <IconButton
+            name="grid-outline"
+            variant="plain"
+            color="textSecondary"
+            accessibilityLabel="Jump to page"
+            onPress={onOpenPages}
+          />
+        ) : null}
         <IconButton
           name="options-outline"
           variant="plain"

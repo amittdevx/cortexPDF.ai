@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Pdf from 'react-native-pdf';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -57,11 +58,13 @@ export function PdfViewport({
   onError,
 }: PdfViewportProps) {
   const { colors } = useTheme();
-  // continuous → vertical scroll; horizontal → free horizontal scroll;
-  // book → horizontal with page snapping. While frozen (draw mode) we force a
-  // single snapped page so the drawing overlay maps to a stable rect.
-  const horizontal = frozen || scrollMode === 'horizontal' || scrollMode === 'book';
-  const enablePaging = frozen || scrollMode === 'book';
+  const insets = useSafeAreaInsets();
+  // continuous → vertical scroll; horizontal & book → one page at a time
+  // (page-snap). While frozen (draw mode) we also force a single snapped page so
+  // the drawing overlay maps to a stable rect.
+  const isVertical = scrollMode === 'continuous' && !frozen;
+  const horizontal = !isVertical;
+  const enablePaging = !isVertical;
 
   // Page prop fed to <Pdf>: only changes on a deliberate jump, never on scroll.
   const [targetPage, setTargetPage] = useState(page);
@@ -84,7 +87,13 @@ export function PdfViewport({
   }, [zoom]);
 
   return (
-    <View style={styles.viewport}>
+    <View
+      style={[
+        styles.viewport,
+        { backgroundColor: colors.background },
+        // In vertical scroll, keep the top of the page clear of the status bar.
+        isVertical && { paddingTop: insets.top },
+      ]}>
       <Pdf
         source={{ uri: document.uri, cache: true }}
         page={targetPage}

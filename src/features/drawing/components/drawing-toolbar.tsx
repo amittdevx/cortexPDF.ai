@@ -4,7 +4,7 @@
  * arrive via props from the reader screen, wired to the drawing hook (RULE 1).
  */
 
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Glass, Icon, IconButton, PressScale } from '@/components';
@@ -57,11 +57,7 @@ export function DrawingToolbar({
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.three }]}>
-      <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.settingsBar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.settingsContent}>
+      <Glass variant="chrome" radius="md" elevation="lg" flat={Platform.OS === 'android'} style={styles.settingsBar}>
         {(['pen', 'highlighter'] as const).map((t) => {
           const selected = t === tool;
           return (
@@ -130,7 +126,6 @@ export function DrawingToolbar({
             </PressScale>
           );
         })}
-        </ScrollView>
       </Glass>
 
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
@@ -172,13 +167,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     gap: Spacing.two,
   },
-  // Pen settings can exceed the screen width — scroll horizontally so nothing clips.
-  settingsBar: { maxWidth: '100%', paddingVertical: Spacing.two },
-  settingsContent: {
+  // Pen settings wrap to a second line if they don't fit — so nothing ever clips.
+  settingsBar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: Spacing.two,
+    justifyContent: 'center',
+    maxWidth: '94%',
     paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    gap: Spacing.two,
   },
   toolSlot: {
     width: 34,
@@ -194,5 +192,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   widthSlot: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  divider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: Spacing.one, marginHorizontal: Spacing.half },
+  divider: { width: StyleSheet.hairlineWidth, height: 24, marginHorizontal: Spacing.half },
 });
