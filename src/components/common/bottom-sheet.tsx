@@ -49,7 +49,7 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
             {
               backgroundColor: colors.surfaceElevated,
               borderColor: colors.border,
-              paddingBottom: insets.bottom + Spacing.three,
+              paddingBottom: insets.bottom + Spacing.two,
             },
           ]}>
           <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />

@@ -25,6 +25,10 @@ import type { PdfFile } from '@/types/domain';
 
 import { ZOOM } from '../hooks/use-reader';
 
+/** Approx height of the reader's top bar — vertical scroll starts below it so the
+ *  first page isn't hidden behind the chrome. */
+const TOP_BAR_HEIGHT = 52;
+
 export interface PdfViewportProps {
   document: PdfFile;
   /** Controlled page (1-based) — jumps the renderer when changed via controls. */
@@ -91,8 +95,9 @@ export function PdfViewport({
       style={[
         styles.viewport,
         { backgroundColor: colors.background },
-        // In vertical scroll, keep the top of the page clear of the status bar.
-        isVertical && { paddingTop: insets.top },
+        // In vertical scroll, start the page below the status bar AND the top bar
+        // so the first page isn't hidden behind the chrome.
+        isVertical && { paddingTop: insets.top + TOP_BAR_HEIGHT },
       ]}>
       <Pdf
         source={{ uri: document.uri, cache: true }}

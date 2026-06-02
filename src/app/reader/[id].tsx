@@ -7,10 +7,11 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, BackHandler, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { SlideInDown, SlideInUp, SlideOutDown, SlideOutUp } from 'react-native-reanimated';
 
-import { EmptyState } from '@/components';
+import { EmptyState, IconButton } from '@/components';
 import { AiMenuSheet, useAiTasks } from '@/features/ai';
 import { BookmarksSheet, useBookmarks } from '@/features/bookmarks';
 import {
@@ -32,12 +33,13 @@ import {
   useReader,
 } from '@/features/reader';
 import { useTheme } from '@/hooks/use-theme';
-import { ScreenPadding } from '@/theme';
+import { ScreenPadding, Spacing } from '@/theme';
 
 export default function ReaderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const reader = useReader(id);
   const bookmarks = useBookmarks(reader.document?.id);
   const notes = useNotes(reader.document?.id);
@@ -100,6 +102,16 @@ export default function ReaderScreen() {
     setDrawMode(false);
     setChromeVisible(!readingMode);
   }, [readingMode]);
+  // While drawing, the hardware back button should leave draw mode (return to the
+  // reading view), not pop the whole reader screen.
+  useEffect(() => {
+    if (!drawMode) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      exitDraw();
+      return true;
+    });
+    return () => sub.remove();
+  }, [drawMode, exitDraw]);
   // Opening the AI menu pre-extracts the document text (cheap on a cache hit).
   const openAi = useCallback(() => {
     setAiVisible(true);
@@ -163,6 +175,17 @@ export default function ReaderScreen() {
           onZoomChange={reader.setZoom}
           onCommit={drawing.addStroke}
         />
+      ) : null}
+
+      {drawMode ? (
+        <View style={[styles.drawBack, { top: insets.top + Spacing.two }]}>
+          <IconButton
+            name="chevron-back"
+            variant="filled"
+            accessibilityLabel="Exit drawing"
+            onPress={exitDraw}
+          />
+        </View>
       ) : null}
 
       {chromeVisible && !drawMode ? (
@@ -272,6 +295,7 @@ export default function ReaderScreen() {
         onClose={() => setOptionsVisible(false)}
         scrollMode={reader.scrollMode}
         readingMode={reader.readingMode}
+        singlePage={reader.totalPages === 1}
         onScrollModeChange={reader.setScrollMode}
         onReadingModeChange={reader.setReadingMode}
       />
@@ -288,4 +312,5 @@ const styles = StyleSheet.create({
   top: { position: 'absolute', top: 0, left: 0, right: 0 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   readingTint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  drawBack: { position: 'absolute', left: Spacing.three },
 });

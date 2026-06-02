@@ -7,7 +7,7 @@
 
 import { StyleSheet, Switch, View } from 'react-native';
 
-import { BottomSheet, Icon, PressScale, Text, type IconName } from '@/components';
+import { BottomSheet, Button, Icon, PressScale, Text, type IconName } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Radii, Spacing } from '@/theme';
 import type { ReaderScrollMode } from '@/store/reader.store';
@@ -30,6 +30,8 @@ export interface ReaderOptionsSheetProps {
   onClose: () => void;
   scrollMode: ReaderScrollMode;
   readingMode: boolean;
+  /** A single-page document has no layout to choose — show only reading mode. */
+  singlePage?: boolean;
   onScrollModeChange: (mode: ReaderScrollMode) => void;
   onReadingModeChange: (on: boolean) => void;
 }
@@ -39,6 +41,7 @@ export function ReaderOptionsSheet({
   onClose,
   scrollMode,
   readingMode,
+  singlePage = false,
   onScrollModeChange,
   onReadingModeChange,
 }: ReaderOptionsSheetProps) {
@@ -46,47 +49,51 @@ export function ReaderOptionsSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title="View options">
-      <Text variant="caption" color="textTertiary">
-        LAYOUT
-      </Text>
-      <View style={styles.group}>
-        {MODES.map((option) => {
-          const selected = option.mode === scrollMode;
-          return (
-            <PressScale
-              key={option.mode}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={option.label}
-              haptic="light"
-              onPress={() => onScrollModeChange(option.mode)}
-              style={[
-                styles.row,
-                { backgroundColor: selected ? colors.glassFillPrimary : 'transparent' },
-              ]}>
-              <Icon name={option.icon} size="md" color={selected ? 'primary' : 'textSecondary'} />
-              <View style={styles.rowBody}>
-                <Text variant="bodyMedium" color={selected ? 'primary' : 'text'}>
-                  {option.label}
-                </Text>
-                <Text variant="caption" color="textTertiary">
-                  {option.hint}
-                </Text>
-              </View>
-              {selected ? <Icon name="checkmark-circle" size="md" color="primary" /> : null}
-            </PressScale>
-          );
-        })}
-      </View>
+      {!singlePage ? (
+        <>
+          <Text variant="caption" color="textTertiary">
+            LAYOUT
+          </Text>
+          <View style={styles.group}>
+            {MODES.map((option) => {
+              const selected = option.mode === scrollMode;
+              return (
+                <PressScale
+                  key={option.mode}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={option.label}
+                  haptic="light"
+                  onPress={() => onScrollModeChange(option.mode)}
+                  style={[
+                    styles.row,
+                    { backgroundColor: selected ? colors.glassFillPrimary : 'transparent' },
+                  ]}>
+                  <Icon name={option.icon} size="md" color={selected ? 'primary' : 'textSecondary'} />
+                  <View style={styles.rowBody}>
+                    <Text variant="bodyMedium" color={selected ? 'primary' : 'text'}>
+                      {option.label}
+                    </Text>
+                    <Text variant="caption" color="textTertiary">
+                      {option.hint}
+                    </Text>
+                  </View>
+                  {selected ? <Icon name="checkmark-circle" size="md" color="primary" /> : null}
+                </PressScale>
+              );
+            })}
+          </View>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        </>
+      ) : null}
 
       <View style={styles.readingRow}>
         <Icon name="glasses-outline" size="md" color={readingMode ? 'primary' : 'textSecondary'} />
         <View style={styles.rowBody}>
           <Text variant="bodyMedium">Reading mode</Text>
           <Text variant="caption" color="textTertiary">
-            Distraction-free, screen stays awake. Remembered for this file.
+            Distraction-free, warm tint, screen stays awake. Remembered for this file.
           </Text>
         </View>
         <Switch
@@ -96,6 +103,8 @@ export function ReaderOptionsSheet({
           thumbColor={colors.surfaceElevated}
         />
       </View>
+
+      <Button label="Done" fullWidth onPress={onClose} />
     </BottomSheet>
   );
 }
