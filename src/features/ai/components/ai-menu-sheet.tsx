@@ -17,6 +17,7 @@ import { Radii, Spacing, Typography } from '@/theme';
 
 import { AI_TASKS, getTask, type TaskDef } from '../ai-tasks';
 import { QuizView, FlashcardsView, parseJsonLoose } from './ai-result-views';
+import { Markdown } from './markdown';
 
 export interface AiMenuSheetProps {
   visible: boolean;
@@ -217,7 +218,7 @@ function TaskContent({ task, content }: { task: AiTask; content: string }) {
     const data = parseJsonLoose<{ cards?: unknown }>(content);
     if (data?.cards) return <FlashcardsView raw={data} />;
   }
-  return <Text variant="body">{content}</Text>;
+  return <Markdown content={content} />;
 }
 
 const styles = StyleSheet.create({

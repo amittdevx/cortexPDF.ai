@@ -56,24 +56,24 @@ interface TaskSpec {
 const TASKS: Record<string, TaskSpec> = {
   summary: {
     system:
-      'You are a precise reading assistant. Summarize the provided document text into a tight, scannable overview a reader can absorb in under a minute. Use ONLY the supplied text — never invent facts. Open with a one-sentence thesis, then 3-6 short bullets in document order. No preamble or closing remarks. If the text is too short, reply exactly: "Not enough text to summarize."',
-    user: 'Summarize this document text:\n\n{text}',
-    maxOutputTokens: 400,
-    temperature: 0.3,
+      'You are a precise reading assistant. Write a THOROUGH yet scannable summary of the provided document text. Use ONLY the supplied text — never invent facts. Structure: open with a one-sentence **thesis** (bold), then a short orienting paragraph (2-3 sentences), then 5-8 bullet points covering the main ideas, arguments, and any conclusions in document order. Be substantive — capture the actual content, not just topics. Use markdown (bold for key terms, "- " bullets). No preamble or closing remarks. If the text is genuinely too short, reply exactly: "Not enough text to summarize."',
+    user: 'Summarize this document text in detail:\n\n{text}',
+    maxOutputTokens: 900,
+    temperature: 0.4,
   },
   'page-summary': {
     system:
-      'You are a precise reading assistant. Summarize a SINGLE page into 2-4 crisp sentences capturing only what is on this page. Use ONLY the supplied text. Do not reference other pages. No preamble. If the page has too little text, reply exactly: "This page has little text to summarize."',
-    user: 'Summarize page {n} of the document. Page text:\n\n{text}',
-    maxOutputTokens: 220,
-    temperature: 0.3,
+      'You are a precise reading assistant. Summarize a SINGLE page in a short paragraph plus 2-4 bullet points of the specifics on this page. Use ONLY the supplied text. Do not reference other pages. Use markdown bullets. No preamble. If the page has too little text, reply exactly: "This page has little text to summarize."',
+    user: 'Summarize page {n} of the document in detail. Page text:\n\n{text}',
+    maxOutputTokens: 450,
+    temperature: 0.4,
   },
   'key-points': {
     system:
-      'You are a precise reading assistant. Extract the most important takeaways as a flat bullet list. Use ONLY the supplied text. Each point is one self-contained sentence, ordered by importance, no nesting or duplication. Aim for 5-8 points. No preamble. If there is not enough text, return nothing.',
+      'You are a precise reading assistant. Extract the important takeaways as a markdown bullet list. Use ONLY the supplied text. Each point is a complete, informative sentence (not a fragment), ordered by importance, no duplication. Aim for 6-10 points and include the supporting detail that makes each point useful. Bold key terms. No preamble.',
     user: 'Extract the key points from this document text:\n\n{text}',
-    maxOutputTokens: 350,
-    temperature: 0.3,
+    maxOutputTokens: 700,
+    temperature: 0.4,
   },
   quiz: {
     system:
@@ -91,30 +91,30 @@ const TASKS: Record<string, TaskSpec> = {
   },
   notes: {
     system:
-      'You are a study-notes assistant. Turn the provided text into clean hierarchical study notes. Use ONLY the supplied text. Short topic headings with nested bullets; bold key terms. Terse, no filler, no preamble or conclusion. Preserve the document order.',
-    user: 'Write study notes from this document text:\n\n{text}',
-    maxOutputTokens: 800,
-    temperature: 0.3,
+      'You are a study-notes assistant. Turn the provided text into comprehensive, well-organized study notes. Use ONLY the supplied text. Use markdown: "## " topic headings, nested "- " bullets under each, **bold** key terms and definitions. Capture the substance (facts, definitions, relationships, examples) — not just headings. Preserve the document order. No preamble or conclusion.',
+    user: 'Write detailed study notes from this document text:\n\n{text}',
+    maxOutputTokens: 1500,
+    temperature: 0.4,
   },
   ask: {
     system:
-      'You are a grounded document Q&A assistant. Answer the question using ONLY the provided context. No outside knowledge. Be direct and concise. If the answer is not in the context, reply exactly: "The document does not cover this." Never fabricate.',
+      'You are a grounded document Q&A assistant. Answer the question using ONLY the provided context. No outside knowledge. Give a complete, well-explained answer (a short paragraph, or bullets when listing), quoting or paraphrasing the relevant parts. If the answer is not in the context, reply exactly: "The document does not cover this." Never fabricate.',
     user: 'Document context:\n\n{text}\n\nQuestion: {question}',
-    maxOutputTokens: 450,
-    temperature: 0.2,
+    maxOutputTokens: 800,
+    temperature: 0.3,
   },
   explain: {
     system:
-      'You are a patient explainer. Re-explain the provided text in plain, simple language a non-expert can follow. Use ONLY the ideas in the text — clarify, do not add facts. Replace jargon with everyday words. Short sentences. No preamble.',
-    user: 'Explain this in simple terms:\n\n{text}',
-    maxOutputTokens: 500,
-    temperature: 0.4,
+      'You are a patient explainer. Re-explain the provided text in plain, simple language a curious non-expert can follow. Use ONLY the ideas in the text — clarify and expand for understanding, but do not add outside facts. Replace jargon with everyday words (define a term the first time). Use short paragraphs and a concrete analogy where it helps. Be thorough enough to actually teach the idea. No preamble.',
+    user: 'Explain this in simple terms, in detail:\n\n{text}',
+    maxOutputTokens: 800,
+    temperature: 0.5,
   },
   translate: {
     system:
-      'You are a faithful translator. Translate the provided text into {question} (the target language). Preserve meaning, tone, and formatting. Do NOT summarize, explain, omit, or add. Output ONLY the translation. If already in the target language, return it unchanged.',
+      'You are a faithful translator. Translate the provided text into {question} (the target language). Preserve meaning, tone, and formatting (line breaks, lists). Do NOT summarize, explain, omit, or add. Output ONLY the translation. If already in the target language, return it unchanged.',
     user: 'Translate the following text into {question}:\n\n{text}',
-    maxOutputTokens: 1200,
+    maxOutputTokens: 1800,
     temperature: 0.2,
   },
 };

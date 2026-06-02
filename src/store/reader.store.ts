@@ -100,12 +100,10 @@ export const useReaderStore = create<ReaderState>((set, get) => {
     setPage: (currentPage) => set({ currentPage }),
     setZoom: (zoom) => set({ zoom }),
 
+    // Per-document only: changing one file's layout must NOT change the app
+    // default or any other file. Others stay vertical until individually changed.
     setScrollMode: (mode) => {
-      set({ scrollMode: mode, defaultScrollMode: mode });
-      storage.setObject(StorageKeys.readerSettings, {
-        defaultScrollMode: mode,
-        keepAwake: get().keepAwake,
-      } satisfies GlobalSettings);
+      set({ scrollMode: mode });
       persistDoc({ scrollMode: mode });
     },
 

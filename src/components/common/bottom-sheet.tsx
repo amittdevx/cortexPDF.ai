@@ -7,7 +7,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, SlideInDown } from 'react-native-reanimated';
 
@@ -35,9 +35,7 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.root}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={styles.root} behavior="padding">
         <Pressable
           style={[styles.scrim, { backgroundColor: colors.scrim }]}
           accessibilityRole="button"

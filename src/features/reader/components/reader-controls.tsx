@@ -70,6 +70,7 @@ export function ReaderControls({
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.one }]}>
+      {/* Pill 1 — page navigation + zoom */}
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
         <IconButton
           name={prevIcon}
@@ -120,14 +121,15 @@ export function ReaderControls({
           disabled={!canZoomIn}
           onPress={onZoomIn}
         />
+      </Glass>
 
-        <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
-
+      {/* Pill 2 — tools */}
+      <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
         <IconButton
           name="sparkles-outline"
           variant="plain"
           color="textSecondary"
-          accessibilityLabel="AI summary"
+          accessibilityLabel="AI"
           onPress={onOpenAi}
         />
         <IconButton
@@ -159,7 +161,7 @@ export function ReaderControls({
 }
 
 const styles = StyleSheet.create({
-  dock: { alignItems: 'center' },
+  dock: { alignItems: 'center', gap: Spacing.two },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
