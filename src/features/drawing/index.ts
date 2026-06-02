@@ -6,6 +6,8 @@ export {
   type DrawingToolbarProps,
   PEN_COLORS,
   PEN_WIDTHS,
+  HL_WIDTHS,
+  widthsForTool,
 } from './components/drawing-toolbar';
-export { type DrawStroke, type NormPoint } from './services/drawing.service';
+export { type DrawStroke, type NormPoint, type PenTool } from './services/drawing.service';
 export * as drawingService from './services/drawing.service';

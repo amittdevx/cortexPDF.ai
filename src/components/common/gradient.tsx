@@ -70,7 +70,10 @@ export function GradientView({
   const pad = padding ? { padding: Spacing[padding] } : null;
 
   return (
-    <View style={[{ borderRadius: r }, glowStyle, style]} {...rest}>
+    // The backgroundColor gives iOS/Android an opaque rounded shape to cast the
+    // glow shadow from (the gradient lives in a clipped child, so without this
+    // the shadow wouldn't render). It's fully covered by the gradient on top.
+    <View style={[{ borderRadius: r, backgroundColor: stops[0] }, glowStyle, style]} {...rest}>
       <View style={[StyleSheet.absoluteFill, { borderRadius: r, overflow: 'hidden' }]}>
         <LinearGradient colors={stops} start={start} end={end} style={StyleSheet.absoluteFill} />
         {rim ? (

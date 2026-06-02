@@ -18,6 +18,8 @@ import {
   PEN_COLORS,
   PEN_WIDTHS,
   useDrawing,
+  widthsForTool,
+  type PenTool,
 } from '@/features/drawing';
 import { NotesSheet, useNotes } from '@/features/notes';
 import { PagesSheet, PdfViewport, ReaderControls, ReaderToolbar, useReader } from '@/features/reader';
@@ -38,8 +40,16 @@ export default function ReaderScreen() {
   const [notesVisible, setNotesVisible] = useState(false);
   const [pagesVisible, setPagesVisible] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
+  const [penTool, setPenTool] = useState<PenTool>('pen');
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const [penWidth, setPenWidth] = useState(PEN_WIDTHS[1]);
+
+  // Switching tool resets width to that tool's medium preset (pen and marker
+  // live on very different width scales).
+  const changeTool = useCallback((tool: PenTool) => {
+    setPenTool(tool);
+    setPenWidth(widthsForTool(tool)[1]);
+  }, []);
 
   const bookmarkedPages = useMemo(
     () => new Set(bookmarks.bookmarks.map((b) => b.page)),
@@ -114,6 +124,7 @@ export default function ReaderScreen() {
       {drawMode ? (
         <DrawingCanvas
           strokes={drawing.strokes}
+          tool={penTool}
           color={penColor}
           width={penWidth}
           onCommit={drawing.addStroke}
@@ -159,10 +170,12 @@ export default function ReaderScreen() {
       {drawMode ? (
         <Animated.View entering={SlideInDown} exiting={SlideOutDown} style={styles.bottom}>
           <DrawingToolbar
+            tool={penTool}
             color={penColor}
             width={penWidth}
             canUndo={drawing.canUndo}
             canRedo={drawing.canRedo}
+            onToolChange={changeTool}
             onColorChange={setPenColor}
             onWidthChange={setPenWidth}
             onUndo={drawing.undo}

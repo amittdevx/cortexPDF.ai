@@ -7,20 +7,28 @@
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Glass, IconButton, PressScale } from '@/components';
+import { Button, Glass, Icon, IconButton, PressScale } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Radii, Spacing } from '@/theme';
 
+import type { PenTool } from '../services/drawing.service';
+
 /** Pen palette — kept small and calm to match the design language. */
 export const PEN_COLORS = ['#FF3B30', '#FF9500', '#FFCC00', '#34C759', '#0A84FF', '#111111'];
-/** Stroke widths as a fraction of surface width. */
+/** Stroke widths as a fraction of surface width, per tool. */
 export const PEN_WIDTHS = [0.004, 0.008, 0.016];
+export const HL_WIDTHS = [0.02, 0.035, 0.05];
+
+/** The width presets shown for a given tool. */
+export const widthsForTool = (tool: PenTool) => (tool === 'highlighter' ? HL_WIDTHS : PEN_WIDTHS);
 
 export interface DrawingToolbarProps {
+  tool: PenTool;
   color: string;
   width: number;
   canUndo: boolean;
   canRedo: boolean;
+  onToolChange: (tool: PenTool) => void;
   onColorChange: (color: string) => void;
   onWidthChange: (width: number) => void;
   onUndo: () => void;
@@ -30,10 +38,12 @@ export interface DrawingToolbarProps {
 }
 
 export function DrawingToolbar({
+  tool,
   color,
   width,
   canUndo,
   canRedo,
+  onToolChange,
   onColorChange,
   onWidthChange,
   onUndo,
@@ -43,10 +53,36 @@ export function DrawingToolbar({
 }: DrawingToolbarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const widths = widthsForTool(tool);
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.three }]}>
       <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
+        {(['pen', 'highlighter'] as const).map((t) => {
+          const selected = t === tool;
+          return (
+            <PressScale
+              key={t}
+              accessibilityRole="button"
+              accessibilityLabel={t === 'pen' ? 'Pen' : 'Highlighter'}
+              accessibilityState={{ selected }}
+              haptic="light"
+              onPress={() => onToolChange(t)}
+              style={[
+                styles.toolSlot,
+                selected && { backgroundColor: colors.glassFillPrimary },
+              ]}>
+              <Icon
+                name={t === 'pen' ? 'pencil' : 'color-wand'}
+                size="md"
+                color={selected ? 'primary' : 'textSecondary'}
+              />
+            </PressScale>
+          );
+        })}
+
+        <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
+
         {PEN_COLORS.map((c) => {
           const selected = c === color;
           return (
@@ -67,9 +103,9 @@ export function DrawingToolbar({
 
         <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
 
-        {PEN_WIDTHS.map((w) => {
+        {widths.map((w, i) => {
           const selected = w === width;
-          const dot = 6 + PEN_WIDTHS.indexOf(w) * 6;
+          const dot = 6 + i * 6;
           return (
             <PressScale
               key={w}
@@ -130,6 +166,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     gap: Spacing.two,
+  },
+  toolSlot: {
+    width: 34,
+    height: 34,
+    borderRadius: Radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   swatch: {
     width: 26,
