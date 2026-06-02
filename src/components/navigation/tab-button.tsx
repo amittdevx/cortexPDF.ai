@@ -54,7 +54,7 @@ export const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
       <View style={styles.iconWrap}>
         <Animated.View
           pointerEvents="none"
-          style={[styles.pill, { backgroundColor: colors.primarySoft }, pillStyle]}
+          style={[styles.pill, { backgroundColor: colors.glassFillPrimary }, pillStyle]}
         />
         <Animated.View style={iconStyle}>
           <Icon

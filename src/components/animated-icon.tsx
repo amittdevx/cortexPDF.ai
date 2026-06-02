@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -9,6 +9,14 @@ const DURATION = 600;
 
 export function AnimatedSplashOverlay() {
   const [visible, setVisible] = useState(true);
+
+  // Safety net: always dismiss the overlay even if the entering-animation's
+  // `withCallback` never fires (Reanimated Keyframe callbacks can be unreliable
+  // on the New Architecture). Without this the splash can hang indefinitely.
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(false), DURATION + 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!visible) return null;
 

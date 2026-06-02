@@ -4,10 +4,10 @@
  * auto-hiding chrome; pure presentation driven by props.
  */
 
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { IconButton, PressScale, Surface, Text } from '@/components';
+import { Glass, IconButton, PressScale, Text } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/theme';
 import type { ReaderScrollMode } from '@/store/reader.store';
@@ -25,6 +25,8 @@ export interface ReaderControlsProps {
   onZoomOut: () => void;
   onResetZoom: () => void;
   onToggleScrollMode: () => void;
+  /** Tap the page indicator to open the bookmarks sheet. */
+  onOpenBookmarks: () => void;
 }
 
 export function ReaderControls({
@@ -38,6 +40,7 @@ export function ReaderControls({
   onZoomOut,
   onResetZoom,
   onToggleScrollMode,
+  onOpenBookmarks,
 }: ReaderControlsProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -50,7 +53,7 @@ export function ReaderControls({
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.three }]}>
-      <Surface color="surfaceElevated" elevation="lg" radius="pill" bordered style={styles.bar}>
+      <Glass variant="chrome" radius="pill" elevation="lg" flat={Platform.OS === 'android'} style={styles.bar}>
         <IconButton
           name="chevron-back"
           variant="plain"
@@ -58,9 +61,14 @@ export function ReaderControls({
           disabled={!canPrev}
           onPress={onPrev}
         />
-        <Text variant="smallBold" style={styles.pageLabel}>
-          {pageLabel}
-        </Text>
+        <PressScale
+          accessibilityRole="button"
+          accessibilityLabel="Open bookmarks"
+          haptic="light"
+          style={styles.pageLabel}
+          onPress={onOpenBookmarks}>
+          <Text variant="smallBold">{pageLabel}</Text>
+        </PressScale>
         <IconButton
           name="chevron-forward"
           variant="plain"
@@ -69,7 +77,7 @@ export function ReaderControls({
           onPress={onNext}
         />
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
 
         <IconButton
           name="remove"
@@ -96,7 +104,7 @@ export function ReaderControls({
           onPress={onZoomIn}
         />
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: colors.glassBorder }]} />
 
         <IconButton
           name={scrollMode === 'continuous' ? 'swap-vertical' : 'documents-outline'}
@@ -107,7 +115,7 @@ export function ReaderControls({
           }
           onPress={onToggleScrollMode}
         />
-      </Surface>
+      </Glass>
     </View>
   );
 }
@@ -121,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     gap: Spacing.half,
   },
-  pageLabel: { minWidth: 44, textAlign: 'center' },
+  pageLabel: { minWidth: 44, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.two },
   zoomLabel: { minWidth: 48, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.two },
   divider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: Spacing.two, marginHorizontal: Spacing.half },
 });

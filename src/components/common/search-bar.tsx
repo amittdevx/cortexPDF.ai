@@ -4,9 +4,10 @@
  * and handle `onChangeText` (RULE 1 — the parent owns the query state).
  */
 
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
+import { Glass } from './glass';
 import { Icon } from './icon';
 import { PressScale } from '@/components/animations/press-scale';
 import { HitSlop, Radii, Spacing, Typography } from '@/theme';
@@ -23,7 +24,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search', onClear
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundElement }]}>
+    <Glass variant="search" radius="md" style={styles.container}>
       <Icon name="search" size="md" color="textTertiary" />
       <TextInput
         value={value}
@@ -48,7 +49,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search', onClear
           <Icon name="close-circle" size="md" color="textTertiary" />
         </PressScale>
       ) : null}
-    </View>
+    </Glass>
   );
 }
 

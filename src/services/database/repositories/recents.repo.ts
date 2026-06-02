@@ -67,6 +67,30 @@ export async function upsertRecent(
 ): Promise<void> {
   const db = await getDatabase();
   if (!db) return;
+
+  // Dedup by content identity (name + size). expo-document-picker copies each
+  // import to a fresh cache URI, so re-importing the same PDF would otherwise
+  // insert a duplicate under a new URI (the ON CONFLICT(uri) guard never fires).
+  // If a row with the same name+size exists, bump it (refresh URI/page-count/time)
+  // instead of inserting a duplicate.
+  const existing = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM recent_files WHERE name = ? AND size = ? LIMIT 1',
+    input.name,
+    input.size,
+  );
+  if (existing) {
+    await db.runAsync(
+      `UPDATE recent_files
+         SET uri = ?, page_count = COALESCE(?, page_count), last_opened_at = ?
+       WHERE id = ?`,
+      input.uri,
+      input.pageCount ?? null,
+      openedAt,
+      existing.id,
+    );
+    return;
+  }
+
   await db.runAsync(
     `INSERT INTO recent_files (id, uri, name, size, page_count, last_opened_at, is_pinned)
      VALUES (?, ?, ?, ?, ?, ?, 0)

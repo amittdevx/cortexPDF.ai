@@ -41,15 +41,16 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
           onPress={onClose}
         />
         <Animated.View
-          entering={SlideInDown.springify().damping(22)}
+          entering={SlideInDown.springify().damping(30)}
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.surfaceElevated,
+              backgroundColor: colors.glassFillStrong,
+              borderColor: colors.glassBorder,
               paddingBottom: insets.bottom + Spacing.four,
             },
           ]}>
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+          <View style={[styles.handle, { backgroundColor: colors.glassBorder }]} />
           {title ? (
             <Text variant="title3" style={styles.title}>
               {title}
@@ -66,8 +67,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
-    borderTopLeftRadius: Radii.xl,
-    borderTopRightRadius: Radii.xl,
+    borderTopLeftRadius: Radii.glass,
+    borderTopRightRadius: Radii.glass,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
     gap: Spacing.three,

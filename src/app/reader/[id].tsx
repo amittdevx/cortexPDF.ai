@@ -11,6 +11,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown, SlideInUp, SlideOutDown, SlideOutUp } from 'react-native-reanimated';
 
 import { EmptyState } from '@/components';
+import { BookmarksSheet, useBookmarks } from '@/features/bookmarks';
 import { PdfViewport, ReaderControls, ReaderToolbar, useReader } from '@/features/reader';
 import { useTheme } from '@/hooks/use-theme';
 import { ScreenPadding } from '@/theme';
@@ -20,12 +21,22 @@ export default function ReaderScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const reader = useReader(id);
+  const bookmarks = useBookmarks(reader.document?.id);
   const [chromeVisible, setChromeVisible] = useState(true);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [bookmarksVisible, setBookmarksVisible] = useState(false);
 
   const goBack = useCallback(() => router.back(), [router]);
   const toggleChrome = useCallback(() => setChromeVisible((v) => !v), []);
   const toggleScrollMode = useCallback(
     () => reader.setScrollMode(reader.scrollMode === 'continuous' ? 'paged' : 'continuous'),
+    [reader],
+  );
+  const jumpToPage = useCallback(
+    (targetPage: number) => {
+      reader.goToPage(targetPage);
+      setBookmarksVisible(false);
+    },
     [reader],
   );
 
@@ -37,13 +48,13 @@ export default function ReaderScreen() {
     );
   }
 
-  if (reader.error || !reader.document) {
+  if (reader.error || renderError || !reader.document) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <EmptyState
           icon="alert-circle-outline"
           title="Can’t open this document"
-          message={reader.error ?? 'The file is no longer available.'}
+          message={reader.error ?? renderError ?? 'The file is no longer available.'}
           actionLabel="Back to Library"
           onAction={goBack}
         />
@@ -56,10 +67,13 @@ export default function ReaderScreen() {
       <PdfViewport
         document={reader.document}
         page={reader.page}
-        totalPages={reader.totalPages}
         zoom={reader.zoom}
+        scrollMode={reader.scrollMode}
         onZoomChange={reader.setZoom}
+        onPageChange={reader.goToPage}
+        onLoadComplete={reader.reportPageCount}
         onTap={toggleChrome}
+        onError={setRenderError}
       />
 
       {chromeVisible ? (
@@ -69,7 +83,9 @@ export default function ReaderScreen() {
               title={reader.document.name}
               page={reader.page}
               totalPages={reader.totalPages}
+              isBookmarked={bookmarks.isBookmarked(reader.page)}
               onBack={goBack}
+              onToggleBookmark={() => bookmarks.toggle(reader.page)}
               onShare={reader.share}
             />
           </Animated.View>
@@ -86,10 +102,22 @@ export default function ReaderScreen() {
               onZoomOut={reader.zoomOut}
               onResetZoom={reader.resetZoom}
               onToggleScrollMode={toggleScrollMode}
+              onOpenBookmarks={() => setBookmarksVisible(true)}
             />
           </Animated.View>
         </>
       ) : null}
+
+      <BookmarksSheet
+        visible={bookmarksVisible}
+        onClose={() => setBookmarksVisible(false)}
+        bookmarks={bookmarks.bookmarks}
+        currentPage={reader.page}
+        isCurrentBookmarked={bookmarks.isBookmarked(reader.page)}
+        onToggleCurrent={() => bookmarks.toggle(reader.page)}
+        onJump={jumpToPage}
+        onRemove={bookmarks.remove}
+      />
     </View>
   );
 }

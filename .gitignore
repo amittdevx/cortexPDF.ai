@@ -46,3 +46,7 @@ example
 .vscode/
 .claude/
 .idea/
+
+# local dev screenshots
+.cortex-*.png
+.glass-*.png

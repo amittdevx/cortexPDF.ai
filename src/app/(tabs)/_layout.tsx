@@ -1,19 +1,21 @@
 /**
- * Tab navigator — headless `expo-router/ui` tabs with a fully custom, animated
- * tab bar. `TabSlot` renders the active screen above a docked `TabList` styled as
- * a premium bar; each `TabTrigger asChild` renders our animated `TabButton`.
+ * Tab navigator — headless `expo-router/ui` tabs with a FLOATING frosted-glass
+ * tab bar. `TabSlot` renders the active screen; the `TabList` floats above the
+ * bottom edge as a rounded glass bar. The `Glass` background is an absolute-fill
+ * FIRST child of `TabList` (expo-router only parses `TabTrigger`s inside the
+ * `TabList` and ignores other children, so this renders behind the triggers
+ * without breaking trigger discovery). It is the one always-on live-blur surface.
  */
 
 import { Tabs, TabList, TabSlot, TabTrigger } from 'expo-router/ui';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Glass } from '@/components';
 import { TabButton } from '@/components/navigation/tab-button';
-import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/theme';
+import { Radii, Spacing } from '@/theme';
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -22,15 +24,8 @@ export default function TabsLayout() {
         <TabSlot />
       </View>
 
-      <TabList
-        style={[
-          styles.bar,
-          {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-            paddingBottom: Math.max(insets.bottom, Spacing.two),
-          },
-        ]}>
+      <TabList style={[styles.bar, { bottom: insets.bottom + Spacing.two }]}>
+        <Glass variant="chrome" radius="glass" elevation="xl" style={StyleSheet.absoluteFill} />
         <TabTrigger name="library" href="/" asChild>
           <TabButton icon="albums-outline" iconFocused="albums" label="Library" />
         </TabTrigger>
@@ -48,10 +43,15 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   slot: { flex: 1 },
   bar: {
+    position: 'absolute',
+    left: Spacing.three,
+    right: Spacing.three,
     flexDirection: 'row',
-    alignItems: 'flex-start',
     justifyContent: 'space-around',
-    paddingTop: Spacing.one,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: 'flex-start',
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.two,
+    paddingHorizontal: Spacing.one,
+    borderRadius: Radii.glass,
   },
 });

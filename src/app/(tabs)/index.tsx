@@ -12,14 +12,14 @@ import {
   Button,
   EmptyState,
   FadeIn,
+  Glass,
   IconButton,
   Screen,
   ScreenHeader,
   SearchBar,
   Skeleton,
-  Surface,
 } from '@/components';
-import { FileCard, FileInfoSheet, useRecents } from '@/features/recents';
+import { FileCard, FileInfoSheet, SwipeableRow, useRecents } from '@/features/recents';
 import { useReaderStore } from '@/store/reader.store';
 import { ScreenPadding, Spacing } from '@/theme';
 import type { PdfFile } from '@/types/domain';
@@ -59,11 +59,13 @@ export default function LibraryScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: PdfFile; index: number }) => (
-      <FadeIn index={index} stagger={45}>
-        <FileCard file={item} onOpen={onOpen} onTogglePin={togglePin} onShowInfo={onShowInfo} />
+      <FadeIn index={index} stagger={0}>
+        <SwipeableRow onDelete={() => void remove(item.id)}>
+          <FileCard file={item} onOpen={onOpen} onTogglePin={togglePin} onShowInfo={onShowInfo} />
+        </SwipeableRow>
       </FadeIn>
     ),
-    [onOpen, togglePin, onShowInfo],
+    [onOpen, togglePin, onShowInfo, remove],
   );
 
   const subtitle = totalCount
@@ -147,13 +149,13 @@ function LoadingList() {
   return (
     <View style={styles.loading}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <Surface key={i} color="surface" elevation="sm" padding="three" bordered style={styles.skeletonRow}>
+        <Glass key={i} variant="card" padding="three" style={styles.skeletonRow}>
           <Skeleton width={48} height={48} radius="md" />
           <View style={styles.skeletonBody}>
             <Skeleton width="70%" height={15} />
             <Skeleton width="40%" height={11} />
           </View>
-        </Surface>
+        </Glass>
       ))}
     </View>
   );

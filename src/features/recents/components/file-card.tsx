@@ -4,9 +4,10 @@
  * via props from the screen, which wires them to the feature hook.
  */
 
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Icon, IconButton, PressScale, Surface, Text } from '@/components';
+import { Glass, Icon, IconButton, PressScale, Text } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/services/haptics';
 import type { PdfFile } from '@/types/domain';
@@ -21,7 +22,12 @@ export interface FileCardProps {
   onShowInfo?: (file: PdfFile) => void;
 }
 
-export function FileCard({ file, onOpen, onTogglePin, onShowInfo }: FileCardProps) {
+export const FileCard = memo(function FileCard({
+  file,
+  onOpen,
+  onTogglePin,
+  onShowInfo,
+}: FileCardProps) {
   const { colors } = useTheme();
   const meta = [formatBytes(file.size), formatRelativeTime(file.lastOpenedAt)]
     .filter(Boolean)
@@ -40,8 +46,8 @@ export function FileCard({ file, onOpen, onTogglePin, onShowInfo }: FileCardProp
       }
       accessibilityRole="button"
       accessibilityHint={onShowInfo ? 'Double tap to open, long press for options' : undefined}>
-      <Surface color="surface" elevation="sm" padding="three" bordered style={styles.card}>
-        <View style={[styles.thumb, { backgroundColor: colors.primarySoft }]}>
+      <Glass variant="card" padding="three" radius="lg" style={styles.card}>
+        <View style={[styles.thumb, { backgroundColor: colors.glassFillPrimary }]}>
           <Icon name="document-text" size="lg" color="primary" />
         </View>
 
@@ -60,10 +66,10 @@ export function FileCard({ file, onOpen, onTogglePin, onShowInfo }: FileCardProp
           accessibilityLabel={file.isPinned ? 'Unpin file' : 'Pin file'}
           onPress={() => onTogglePin(file)}
         />
-      </Surface>
+      </Glass>
     </PressScale>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },

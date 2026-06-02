@@ -4,6 +4,7 @@
  * layouts. Optionally scrolls. Every screen should start here.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type ScrollViewProps } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
@@ -17,8 +18,10 @@ export interface ScreenProps {
   scroll?: boolean;
   /** Remove the default horizontal padding (for edge-to-edge lists). */
   noPadding?: boolean;
-  /** Reserve space at the bottom for the native tab bar. */
+  /** Reserve space at the bottom for the floating tab bar. */
   tabBarInset?: boolean;
+  /** Paint the soft backdrop gradient wash that glass surfaces sit over. Default true. */
+  backdrop?: boolean;
   /** Safe-area edges to apply. Defaults to top only (tab bar handles bottom). */
   edges?: readonly Edge[];
   contentContainerStyle?: ScrollViewProps['contentContainerStyle'];
@@ -29,6 +32,7 @@ export function Screen({
   scroll,
   noPadding,
   tabBarInset,
+  backdrop = true,
   edges = ['top'],
   contentContainerStyle,
 }: ScreenProps) {
@@ -41,6 +45,13 @@ export function Screen({
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {backdrop ? (
+        <LinearGradient
+          colors={[colors.backdropTop, colors.backdropBottom]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+      ) : null}
       <SafeAreaView style={styles.safe} edges={edges}>
         <View style={styles.center}>
           {scroll ? (

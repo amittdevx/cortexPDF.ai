@@ -1,33 +1,49 @@
 /**
- * FadeIn — a declarative entrance animation. Wrap any view to have it fade + rise
- * into place on mount. Pass `index` for automatic staggering down a list, so
- * content arrives as a gentle cascade rather than all at once.
+ * FadeIn — a calm entrance: fade in (opacity) with a subtle scale-settle
+ * (0.96 → 1) and NO vertical travel, so content arrives softly instead of
+ * "jumping" up. Stagger is small and capped so long lists don't cascade. Runs
+ * entirely on the UI thread (opacity + transform only).
  */
 
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
-import { Duration } from '@/theme';
+import { EntranceScaleFrom, Springs, Timings } from '@/theme';
 
 export interface FadeInProps {
   children: ReactNode;
   /** Base delay in ms before the animation starts. */
   delay?: number;
-  /** List position — adds a per-item stagger on top of `delay`. */
+  /** List position — adds a small, capped per-item stagger on top of `delay`. */
   index?: number;
   /** Per-item stagger step in ms. */
   stagger?: number;
   style?: StyleProp<ViewStyle>;
 }
 
-export function FadeIn({ children, delay = 0, index = 0, stagger = 55, style }: FadeInProps) {
-  const totalDelay = delay + index * stagger;
-  return (
-    <Animated.View
-      entering={FadeInDown.duration(Duration.base).delay(totalDelay).springify().damping(20)}
-      style={style}>
-      {children}
-    </Animated.View>
-  );
+export function FadeIn({ children, delay = 0, index = 0, stagger = 14, style }: FadeInProps) {
+  const total = delay + Math.min(index, 4) * stagger; // cap the cascade on long lists
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(EntranceScaleFrom);
+
+  useEffect(() => {
+    opacity.value = withDelay(total, withTiming(1, Timings.fade));
+    scale.value = withDelay(total, withSpring(1, Springs.gentle));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
+  return <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>;
 }

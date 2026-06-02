@@ -4,11 +4,10 @@
  * with behavior arriving via props from the screen.
  */
 
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { IconButton, Text } from '@/components';
-import { useTheme } from '@/hooks/use-theme';
+import { Glass, IconButton, Text } from '@/components';
 import { Spacing } from '@/theme';
 import { fileNameToTitle } from '@/utils/format';
 
@@ -16,25 +15,31 @@ export interface ReaderToolbarProps {
   title: string;
   page: number;
   totalPages: number | null;
+  isBookmarked: boolean;
   onBack: () => void;
+  onToggleBookmark: () => void;
   onShare: () => void;
 }
 
-export function ReaderToolbar({ title, page, totalPages, onBack, onShare }: ReaderToolbarProps) {
-  const { colors } = useTheme();
+export function ReaderToolbar({
+  title,
+  page,
+  totalPages,
+  isBookmarked,
+  onBack,
+  onToggleBookmark,
+  onShare,
+}: ReaderToolbarProps) {
   const insets = useSafeAreaInsets();
   const meta = totalPages ? `Page ${page} of ${totalPages}` : `Page ${page}`;
 
   return (
-    <View
-      style={[
-        styles.bar,
-        {
-          paddingTop: insets.top + Spacing.one,
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
-        },
-      ]}>
+    <Glass
+      variant="chrome"
+      radius="none"
+      elevation="none"
+      flat={Platform.OS === 'android'}
+      style={[styles.bar, { paddingTop: insets.top + Spacing.one }]}>
       <IconButton
         name="chevron-back"
         variant="filled"
@@ -50,12 +55,19 @@ export function ReaderToolbar({ title, page, totalPages, onBack, onShare }: Read
         </Text>
       </View>
       <IconButton
+        name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+        color={isBookmarked ? 'primary' : 'text'}
+        variant="filled"
+        accessibilityLabel={isBookmarked ? 'Remove bookmark for this page' : 'Bookmark this page'}
+        onPress={onToggleBookmark}
+      />
+      <IconButton
         name="share-outline"
         variant="filled"
         accessibilityLabel="Share document"
         onPress={onShare}
       />
-    </View>
+    </Glass>
   );
 }
 
@@ -66,7 +78,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   titleBlock: { flex: 1, alignItems: 'center', gap: Spacing.half },
 });

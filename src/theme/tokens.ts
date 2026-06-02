@@ -32,6 +32,7 @@ export const Radii = {
   sm: 10,
   md: 14,
   lg: 20,
+  glass: 24, // continuous-corner feel for floating chrome (tab bar, sheet)
   xl: 28,
   pill: 999,
 } as const;
@@ -92,6 +93,12 @@ export const Opacity = {
 
 /** Default hit slop so small icon buttons stay easy to tap. */
 export const HitSlop = { top: 10, bottom: 10, left: 10, right: 10 } as const;
+
+/** Glass material parameters. Intensities deliberately low for mid-range Android. */
+export const Glass = {
+  intensityChrome: 24, // tab bar / reader bars (reader blur is iOS-only)
+  highlightHeight: 1.5, // specular top-edge strip height
+} as const;
 
 export type SpacingToken = keyof typeof Spacing;
 export type RadiusToken = keyof typeof Radii;

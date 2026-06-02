@@ -7,6 +7,7 @@
 export { Text, type AppTextProps } from './common/text';
 export { Icon, type IconName, type IconProps } from './common/icon';
 export { Surface, type SurfaceProps } from './common/surface';
+export { Glass, type GlassProps, type GlassVariant } from './common/glass';
 export { Screen, type ScreenProps } from './common/screen';
 export { ScreenHeader, type ScreenHeaderProps } from './common/screen-header';
 export { EmptyState, type EmptyStateProps } from './common/empty-state';

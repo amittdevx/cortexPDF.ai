@@ -56,6 +56,22 @@ export interface ColorScheme {
   scrim: string;
   /** Skeleton / shimmer base while loading. */
   skeleton: string;
+
+  /** Translucent fill for faux-glass cards/rows (NO live blur). Sits over the backdrop. */
+  glassFill: string;
+  /** Stronger translucent fill for chrome fallback + the modal sheet (near-opaque, legible). */
+  glassFillStrong: string;
+  /** Primary-tinted glass fill — active tab pill, thumbnails, medallions. */
+  glassFillPrimary: string;
+  /** Low-alpha tint passed INTO GlassView / BlurView. */
+  glassTint: string;
+  /** Hairline glass border — brighter than `border` so the rim catches light. */
+  glassBorder: string;
+  /** Specular top-edge highlight (the 1px line that sells "glass"). */
+  glassHighlight: string;
+  /** Backdrop wash gradient stops (bottom == background for a seamless blend). */
+  backdropTop: string;
+  backdropBottom: string;
 }
 
 export const lightColors: ColorScheme = {
@@ -86,6 +102,15 @@ export const lightColors: ColorScheme = {
 
   scrim: 'rgba(10, 12, 18, 0.40)',
   skeleton: '#ECEDF1',
+
+  glassFill: 'rgba(255, 255, 255, 0.62)',
+  glassFillStrong: 'rgba(255, 255, 255, 0.82)',
+  glassFillPrimary: 'rgba(47, 111, 237, 0.12)',
+  glassTint: 'rgba(255, 255, 255, 0.35)',
+  glassBorder: 'rgba(255, 255, 255, 0.70)',
+  glassHighlight: 'rgba(255, 255, 255, 0.90)',
+  backdropTop: '#EFF2FB',
+  backdropBottom: '#FBFBFD',
 };
 
 export const darkColors: ColorScheme = {
@@ -116,6 +141,15 @@ export const darkColors: ColorScheme = {
 
   scrim: 'rgba(0, 0, 0, 0.55)',
   skeleton: '#1E2127',
+
+  glassFill: 'rgba(34, 38, 47, 0.55)',
+  glassFillStrong: 'rgba(28, 31, 39, 0.80)',
+  glassFillPrimary: 'rgba(91, 141, 239, 0.18)',
+  glassTint: 'rgba(20, 22, 28, 0.40)',
+  glassBorder: 'rgba(255, 255, 255, 0.12)',
+  glassHighlight: 'rgba(255, 255, 255, 0.14)',
+  backdropTop: '#10131A',
+  backdropBottom: '#0B0C0F',
 };
 
 export const Colors = {

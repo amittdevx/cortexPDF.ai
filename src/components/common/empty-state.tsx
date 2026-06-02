@@ -26,7 +26,7 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Empt
   return (
     <FadeIn>
       <View style={styles.container}>
-        <View style={[styles.medallion, { backgroundColor: colors.primarySoft }]}>
+        <View style={[styles.medallion, { backgroundColor: colors.glassFillPrimary }]}>
           <Icon name={icon} size="xl" color="primary" />
         </View>
         <Text variant="title3" center>

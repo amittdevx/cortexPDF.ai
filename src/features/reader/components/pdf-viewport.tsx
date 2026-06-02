@@ -1,130 +1,117 @@
 /**
- * PdfViewport — the document rendering surface.
+ * PdfViewport — the document rendering surface, backed by react-native-pdf
+ * (native, New-Architecture/Fabric). Concrete implementation behind the reader's
+ * rendering seam; the screen/hook/store/controls are unchanged.
  *
- * The native renderer (react-native-pdf) is wired in a later step behind the
- * `@/services/pdf` seam; until then this presents a polished page placeholder so
- * the full reader shell — zoom (pinch + controls), page state, and immersive
- * chrome toggling — is real and testable in Expo Go. When the engine lands, this
- * component swaps its body for the native view with no change to the screen,
- * store, or controls around it.
+ * Requires a dev build (native module) — does NOT run in Expo Go.
+ *
+ * IMPORTANT — feedback-loop avoidance: react-native-pdf re-jumps whenever its
+ * `page`/`scale` props CHANGE. If we fed every `onPageChanged`/`onScaleChanged`
+ * straight back into those props, scrolling/pinching would push the prop back,
+ * snap the view, and spin a redraw storm → ANR/crash. So we push a value to the
+ * native view ONLY when the store changed for a reason OTHER than the view itself
+ * reporting it (i.e. a deliberate jump from the controls), tracked via the
+ * `reported*` refs. Scroll/pinch echoes update the indicator but never the prop.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Pdf from 'react-native-pdf';
 
-import { Icon, Surface, Text } from '@/components';
 import { useTheme } from '@/hooks/use-theme';
-import { Radii, Spacing, Springs } from '@/theme';
+import type { ReaderScrollMode } from '@/store/reader.store';
 import type { PdfFile } from '@/types/domain';
-import { fileNameToTitle } from '@/utils/format';
 
 import { ZOOM } from '../hooks/use-reader';
 
 export interface PdfViewportProps {
   document: PdfFile;
+  /** Controlled page (1-based) — jumps the renderer when changed via controls. */
   page: number;
-  totalPages: number | null;
+  /** Controlled zoom — driven by the zoom controls. */
   zoom: number;
-  /** Commit a new zoom level (e.g. at the end of a pinch). */
+  scrollMode: ReaderScrollMode;
+  /** Renderer reported a new zoom (pinch). */
   onZoomChange: (zoom: number) => void;
-  /** Single tap — used by the screen to toggle the reader chrome. */
+  /** Renderer scrolled/paged to a different page. */
+  onPageChange: (page: number) => void;
+  /** Renderer finished loading and knows the page count. */
+  onLoadComplete: (pageCount: number) => void;
+  /** Single tap on the page — used to toggle the reader chrome. */
   onTap?: () => void;
+  onError?: (message: string) => void;
 }
 
 export function PdfViewport({
   document,
   page,
-  totalPages,
   zoom,
+  scrollMode,
   onZoomChange,
+  onPageChange,
+  onLoadComplete,
   onTap,
+  onError,
 }: PdfViewportProps) {
   const { colors } = useTheme();
-  const scale = useSharedValue(zoom);
-  const startScale = useSharedValue(zoom);
+  const paged = scrollMode === 'paged';
 
-  // Reflect zoom coming from the controls (soft spring settle). A pinch already
-  // leaves `scale` at the committed value, so skip the redundant re-spring then.
+  // Page prop fed to <Pdf>: only changes on a deliberate jump, never on scroll.
+  const [targetPage, setTargetPage] = useState(page);
+  const reportedPage = useRef(page);
   useEffect(() => {
-    if (Math.abs(scale.value - zoom) > 0.001) {
-      scale.value = withSpring(zoom, Springs.gentle);
+    if (page !== reportedPage.current) {
+      reportedPage.current = page;
+      setTargetPage(page);
     }
-  }, [zoom, scale]);
+  }, [page]);
 
-  const pinch = Gesture.Pinch()
-    .onStart(() => {
-      startScale.value = scale.value;
-    })
-    .onUpdate((e) => {
-      scale.value = Math.min(Math.max(startScale.value * e.scale, ZOOM.min), ZOOM.max);
-    })
-    .onEnd(() => {
-      runOnJS(onZoomChange)(scale.value);
-    });
-
-  const tap = Gesture.Tap()
-    .maxDuration(250)
-    .onEnd(() => {
-      if (onTap) runOnJS(onTap)();
-    });
-
-  const gesture = Gesture.Exclusive(pinch, tap);
-  const pageStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const meta = totalPages ? `Page ${page} of ${totalPages}` : `Page ${page}`;
+  // Scale prop fed to <Pdf>: only changes on a deliberate (button) zoom, never on pinch.
+  const [targetScale, setTargetScale] = useState(zoom);
+  const reportedScale = useRef(zoom);
+  useEffect(() => {
+    if (Math.abs(zoom - reportedScale.current) > 0.001) {
+      reportedScale.current = zoom;
+      setTargetScale(zoom);
+    }
+  }, [zoom]);
 
   return (
-    <GestureDetector gesture={gesture}>
-      <View style={styles.viewport}>
-        <Animated.View style={pageStyle}>
-          <Surface color="surface" elevation="lg" radius="md" bordered style={styles.page}>
-            <View style={[styles.medallion, { backgroundColor: colors.primarySoft }]}>
-              <Icon name="document-text-outline" size="xl" color="primary" />
-            </View>
-            <Text variant="bodyMedium" center numberOfLines={2}>
-              {fileNameToTitle(document.name)}
-            </Text>
-            <Text variant="caption" color="textSecondary" center>
-              {meta}
-            </Text>
-            <Text variant="caption" color="textTertiary" center style={styles.note}>
-              Live rendering wires up in the reader engine step.
-            </Text>
-          </Surface>
-        </Animated.View>
-      </View>
-    </GestureDetector>
+    <View style={styles.viewport}>
+      <Pdf
+        source={{ uri: document.uri, cache: true }}
+        page={targetPage}
+        scale={targetScale}
+        minScale={ZOOM.min}
+        maxScale={ZOOM.max}
+        horizontal={paged}
+        enablePaging={paged}
+        spacing={paged ? 0 : 8}
+        fitPolicy={0 /* fit width */}
+        enableAntialiasing
+        enableDoubleTapZoom={false /* single-tap toggles chrome; controls own zoom */}
+        style={[styles.pdf, { backgroundColor: colors.background }]}
+        onLoadComplete={(numberOfPages) => onLoadComplete(numberOfPages)}
+        onPageChanged={(currentPage) => {
+          if (currentPage !== reportedPage.current) {
+            reportedPage.current = currentPage;
+            onPageChange(currentPage);
+          }
+        }}
+        onScaleChanged={(scale) => {
+          if (Math.abs(scale - reportedScale.current) > 0.005) {
+            reportedScale.current = scale;
+            onZoomChange(scale);
+          }
+        }}
+        onPageSingleTap={() => onTap?.()}
+        onError={(error) => onError?.(error instanceof Error ? error.message : String(error))}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  viewport: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  page: {
-    width: '82%',
-    aspectRatio: 1 / 1.414, // A-series page proportions
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-  },
-  medallion: {
-    width: 64,
-    height: 64,
-    borderRadius: Radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.one,
-  },
-  note: { maxWidth: 220, marginTop: Spacing.two },
+  viewport: { flex: 1 },
+  pdf: { flex: 1, width: '100%' },
 });

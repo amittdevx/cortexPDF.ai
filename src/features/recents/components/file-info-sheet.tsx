@@ -38,7 +38,7 @@ export function FileInfoSheet({
       {file ? (
         <>
           <View style={styles.header}>
-            <View style={[styles.thumb, { backgroundColor: colors.primarySoft }]}>
+            <View style={[styles.thumb, { backgroundColor: colors.glassFillPrimary }]}>
               <Icon name="document-text" size="lg" color="primary" />
             </View>
             <View style={styles.headerText}>

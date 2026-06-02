@@ -23,7 +23,7 @@ export default function ToolsScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: ToolDefinition; index: number }) => (
-      <FadeIn index={index} stagger={50} style={styles.cell}>
+      <FadeIn index={index} style={styles.cell}>
         <ToolCard tool={item} onPress={onToolPress} />
       </FadeIn>
     ),

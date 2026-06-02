@@ -50,3 +50,6 @@ export const PressScale = {
   button: 0.96,
   icon: 0.9,
 } as const;
+
+/** Entrance settle: scale grows from this to 1 (no vertical travel → no "jump"). */
+export const EntranceScaleFrom = 0.96;
