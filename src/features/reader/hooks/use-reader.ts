@@ -28,6 +28,9 @@ export interface UseReaderResult {
   /** Total pages once known (renderer-reported or persisted), else `null`. */
   totalPages: number | null;
   zoom: number;
+  /** Pan offset (screen px) of the zoomed page. */
+  panX: number;
+  panY: number;
   scrollMode: ReaderScrollMode;
   /** Immersive reading mode (per-document, persisted). */
   readingMode: boolean;
@@ -40,6 +43,7 @@ export interface UseReaderResult {
   zoomIn: () => void;
   zoomOut: () => void;
   setZoom: (zoom: number) => void;
+  setPan: (x: number, y: number) => void;
   resetZoom: () => void;
   setScrollMode: (mode: ReaderScrollMode) => void;
   setReadingMode: (on: boolean) => void;
@@ -53,6 +57,8 @@ export function useReader(id: string | undefined): UseReaderResult {
   const document = useReaderStore((s) => s.currentPdf);
   const page = useReaderStore((s) => s.currentPage);
   const zoom = useReaderStore((s) => s.zoom);
+  const panX = useReaderStore((s) => s.panX);
+  const panY = useReaderStore((s) => s.panY);
   const scrollMode = useReaderStore((s) => s.scrollMode);
   const readingMode = useReaderStore((s) => s.readingMode);
   const keepAwake = useReaderStore((s) => s.keepAwake);
@@ -61,6 +67,7 @@ export function useReader(id: string | undefined): UseReaderResult {
   const closeDocument = useReaderStore((s) => s.closeDocument);
   const setPage = useReaderStore((s) => s.setPage);
   const setZoomState = useReaderStore((s) => s.setZoom);
+  const setPanState = useReaderStore((s) => s.setPan);
   const setScrollModeState = useReaderStore((s) => s.setScrollMode);
   const setReadingModeState = useReaderStore((s) => s.setReadingMode);
 
@@ -130,9 +137,13 @@ export function useReader(id: string | undefined): UseReaderResult {
     (next: number) => setZoomState(clamp(next, ZOOM.min, ZOOM.max)),
     [setZoomState],
   );
+  const setPan = useCallback((x: number, y: number) => setPanState(x, y), [setPanState]);
   const zoomIn = useCallback(() => setZoom(zoom + ZOOM.step), [setZoom, zoom]);
   const zoomOut = useCallback(() => setZoom(zoom - ZOOM.step), [setZoom, zoom]);
-  const resetZoom = useCallback(() => setZoomState(1), [setZoomState]);
+  const resetZoom = useCallback(() => {
+    setZoomState(1);
+    setPanState(0, 0);
+  }, [setZoomState, setPanState]);
 
   const setScrollMode = useCallback(
     (mode: ReaderScrollMode) => setScrollModeState(mode),
@@ -165,6 +176,8 @@ export function useReader(id: string | undefined): UseReaderResult {
     page,
     totalPages,
     zoom,
+    panX,
+    panY,
     scrollMode,
     readingMode,
     loading,
@@ -175,6 +188,7 @@ export function useReader(id: string | undefined): UseReaderResult {
     zoomIn,
     zoomOut,
     setZoom,
+    setPan,
     resetZoom,
     setScrollMode,
     setReadingMode,

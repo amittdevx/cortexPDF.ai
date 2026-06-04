@@ -13,6 +13,7 @@ import type {
   AiProvider,
   AiTask,
   AiTaskParams,
+  ExtractOptions,
   ExtractResult,
 } from './types';
 
@@ -24,6 +25,7 @@ export type {
   AiTask,
   AiTaskParams,
   ExtractedPage,
+  ExtractOptions,
   ExtractResult,
 } from './types';
 
@@ -59,7 +61,7 @@ export function askDocument(
 /** Extract per-page text from a document — sent ONCE per file, then cached. */
 export function extractDocument(
   doc: AiDocument,
-  options?: AiCompletionOptions,
+  options?: ExtractOptions,
 ): Promise<Result<ExtractResult>> {
   return provider.extract(doc, options);
 }

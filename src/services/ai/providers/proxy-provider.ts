@@ -18,6 +18,7 @@ import type {
   AiProvider,
   AiTask,
   AiTaskParams,
+  ExtractOptions,
   ExtractResult,
 } from '../types';
 
@@ -81,8 +82,13 @@ export class ProxyProvider implements AiProvider {
     return this.postContent('/ask', { document: doc, question }, 'ai/ask', options?.signal);
   }
 
-  extract(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<ExtractResult>> {
-    return this.postJson<ExtractResult>('/extract', { document: doc }, 'ai/extract', options?.signal);
+  extract(doc: AiDocument, options?: ExtractOptions): Promise<Result<ExtractResult>> {
+    return this.postJson<ExtractResult>(
+      '/extract',
+      { document: doc, skipOcr: options?.skipServerOcr ?? false },
+      'ai/extract',
+      options?.signal,
+    );
   }
 
   runTask(

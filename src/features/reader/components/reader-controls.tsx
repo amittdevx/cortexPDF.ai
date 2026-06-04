@@ -25,7 +25,11 @@ export interface ReaderControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onResetZoom: () => void;
-  /** Open the view-options sheet (scroll layout + reading mode). */
+  /** Immersive reading mode is on — lights the direct toggle. */
+  readingMode: boolean;
+  /** Toggle immersive reading mode directly (no sheet). */
+  onToggleReadingMode: () => void;
+  /** Open the view-options sheet (scroll layout). Multi-page documents only. */
   onOpenOptions: () => void;
   /** Tap the page indicator to open the bookmarks sheet. */
   onOpenBookmarks: () => void;
@@ -47,6 +51,8 @@ export function ReaderControls({
   onZoomIn,
   onZoomOut,
   onResetZoom,
+  readingMode,
+  onToggleReadingMode,
   onOpenOptions,
   onOpenBookmarks,
   onOpenPages,
@@ -65,8 +71,9 @@ export function ReaderControls({
   const vertical = scrollMode === 'continuous';
   const prevIcon = vertical ? 'chevron-up' : 'chevron-back';
   const nextIcon = vertical ? 'chevron-down' : 'chevron-forward';
-  // A single-page document has nothing to jump to.
-  const showGrid = totalPages == null || totalPages > 1;
+  // A single-page document has nothing to jump to, and no layout to choose — so
+  // its only "option" was reading mode, which now lives as a direct toggle below.
+  const multiPage = totalPages == null || totalPages > 1;
 
   return (
     <View style={[styles.dock, { paddingBottom: insets.bottom + Spacing.one }]}>
@@ -139,7 +146,7 @@ export function ReaderControls({
           accessibilityLabel="Draw on page"
           onPress={onEnterDraw}
         />
-        {showGrid ? (
+        {multiPage ? (
           <IconButton
             name="grid-outline"
             variant="plain"
@@ -149,12 +156,21 @@ export function ReaderControls({
           />
         ) : null}
         <IconButton
-          name="options-outline"
-          variant="plain"
-          color="textSecondary"
-          accessibilityLabel="View options"
-          onPress={onOpenOptions}
+          name={readingMode ? 'glasses' : 'glasses-outline'}
+          variant={readingMode ? 'tinted' : 'plain'}
+          color={readingMode ? 'primary' : 'textSecondary'}
+          accessibilityLabel={readingMode ? 'Exit reading mode' : 'Reading mode'}
+          onPress={onToggleReadingMode}
         />
+        {multiPage ? (
+          <IconButton
+            name="options-outline"
+            variant="plain"
+            color="textSecondary"
+            accessibilityLabel="Layout options"
+            onPress={onOpenOptions}
+          />
+        ) : null}
       </Glass>
     </View>
   );

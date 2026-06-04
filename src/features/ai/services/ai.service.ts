@@ -7,9 +7,10 @@
  */
 
 import * as aiService from '@/services/ai';
-import type { AiTask, AiTaskParams } from '@/services/ai';
+import type { AiTask, AiTaskParams, ExtractedPage } from '@/services/ai';
 import { aiResultsRepo, pageTextRepo } from '@/services/database';
 import * as fileService from '@/services/file';
+import * as ocrService from '@/services/ocr';
 import type { PdfFile } from '@/types/domain';
 import { err, ok, safeAsync, type Result } from '@/utils/result';
 import { hashString } from '@/utils/id';
@@ -48,22 +49,37 @@ export async function ensureExtracted(file: PdfFile): Promise<Result<string>> {
   const base64Result = await fileService.readBase64(file.uri);
   if (!base64Result.ok) return base64Result;
 
-  const extracted = await aiService.extractDocument({ name: file.name, base64: base64Result.value });
+  const doc = { name: file.name, base64: base64Result.value };
+
+  // Pull the text layer server-side, but skip its Gemini OCR — scanned PDFs are
+  // OCR'd on-device below (no tokens, no output cap, works offline once cached).
+  const extracted = await aiService.extractDocument(doc, { skipServerOcr: true });
   if (!extracted.ok) return extracted;
 
+  let { totalPages, scanned, perPage } = extracted.value;
+
+  if (scanned) {
+    const ocr = await ocrService.ocrPdf(file.uri);
+    if (ocr.ok && hasText(ocr.value)) {
+      perPage = ocr.value;
+      totalPages = ocr.value.length || totalPages;
+    } else {
+      // On-device OCR unavailable/empty → fall back to the server's Gemini OCR.
+      const serverOcr = await aiService.extractDocument(doc, { skipServerOcr: false });
+      if (serverOcr.ok) ({ totalPages, scanned, perPage } = serverOcr.value);
+    }
+  }
+
   const saved = await safeAsync(
-    () =>
-      pageTextRepo.save(
-        fileHash,
-        { totalPages: extracted.value.totalPages, scanned: extracted.value.scanned },
-        extracted.value.perPage,
-        Date.now(),
-      ),
+    () => pageTextRepo.save(fileHash, { totalPages, scanned }, perPage, Date.now()),
     'ai/saveText',
   );
   if (!saved.ok) return saved;
   return ok(fileHash);
 }
+
+/** Whether an extraction produced any usable text at all. */
+const hasText = (pages: ExtractedPage[]): boolean => pages.some((p) => p.text.trim().length > 0);
 
 /** Build the trimmed text slice a task reads. */
 async function buildSlice(

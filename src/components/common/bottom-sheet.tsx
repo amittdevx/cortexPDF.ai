@@ -49,7 +49,9 @@ export function BottomSheet({ visible, onClose, children, title }: BottomSheetPr
             {
               backgroundColor: colors.surfaceElevated,
               borderColor: colors.border,
-              paddingBottom: insets.bottom + Spacing.two,
+              // Snug to the safe area instead of stacking inset + extra padding —
+              // keeps the sheet hugging the bottom edge with no wasted gap.
+              paddingBottom: Math.max(insets.bottom - Spacing.two, Spacing.two),
             },
           ]}>
           <View style={[styles.handle, { backgroundColor: colors.borderStrong }]} />

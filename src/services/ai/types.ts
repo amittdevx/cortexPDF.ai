@@ -19,6 +19,16 @@ export interface AiCompletionOptions {
   signal?: AbortSignal;
 }
 
+/** Options for document text extraction. */
+export interface ExtractOptions extends AiCompletionOptions {
+  /**
+   * Skip the backend's (token-burning, output-capped) Gemini OCR fallback for
+   * scanned PDFs. The app OCRs those on-device instead; the backend then only
+   * reports the text layer + `scanned` flag. Defaults to false.
+   */
+  skipServerOcr?: boolean;
+}
+
 /**
  * A document handed to the backend for analysis. Text extraction happens
  * SERVER-SIDE (the native PDF renderer can't extract text, and we keep parsing
@@ -82,7 +92,7 @@ export interface AiProvider {
     options?: AiCompletionOptions,
   ): Promise<Result<string>>;
   /** Extract per-page text from a document (sent ONCE per file). */
-  extract(doc: AiDocument, options?: AiCompletionOptions): Promise<Result<ExtractResult>>;
+  extract(doc: AiDocument, options?: ExtractOptions): Promise<Result<ExtractResult>>;
   /** Run a named task over already-extracted text. */
   runTask(
     task: AiTask,

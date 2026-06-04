@@ -39,6 +39,9 @@ export interface DrawingCanvasProps {
   width: number;
   /** Current zoom — strokes render at this scale to track the page. */
   zoom: number;
+  /** Current pan offset (screen px) — mirrors the PDF so strokes track pan too. */
+  panX?: number;
+  panY?: number;
   /** Report a pinch zoom so the PDF underneath zooms in step. */
   onZoomChange: (zoom: number) => void;
   /** Called with a finished stroke, points normalized to 0..1. */
@@ -64,6 +67,8 @@ export function DrawingCanvas({
   color,
   width,
   zoom,
+  panX = 0,
+  panY = 0,
   onZoomChange,
   onCommit,
   readOnly = false,
@@ -73,14 +78,18 @@ export function DrawingCanvas({
   const [, redraw] = useReducer((n: number) => n + 1, 0);
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
+  const panRef = useRef({ x: panX, y: panY });
+  panRef.current = { x: panX, y: panY };
   const pinchStart = useRef(zoom);
 
-  // Screen pixel → page (un-zoomed) space, inverse of the center-anchored zoom.
+  // Screen pixel → page (un-zoomed) space: undo the pan, then the center scale.
   const toPage = (x: number, y: number): PxPoint => {
     const z = zoomRef.current || 1;
     const cx = size.w / 2;
     const cy = size.h / 2;
-    return { x: cx + (x - cx) / z, y: cy + (y - cy) / z };
+    const sx = x - panRef.current.x;
+    const sy = y - panRef.current.y;
+    return { x: cx + (sx - cx) / z, y: cy + (sy - cy) / z };
   };
 
   const begin = (x: number, y: number) => {
@@ -154,7 +163,11 @@ export function DrawingCanvas({
   const live = isHighlighter(tool);
   const cx = size.w / 2;
   const cy = size.h / 2;
+  // Pan (screen px) then center-anchored scale — the exact transform PdfViewport
+  // applies to the page, so strokes stay glued under zoom + pan.
   const transform = [
+    { translateX: panX },
+    { translateY: panY },
     { translateX: cx },
     { translateY: cy },
     { scale: zoom },

@@ -1,19 +1,24 @@
 /**
  * PdfViewport — the document rendering surface, backed by react-native-pdf-light
  * (per-page native views we lay out ourselves, so we own scroll offset, page rects
- * and — in later stages — a shared-value zoom + glued stroke overlay). Concrete
- * implementation behind the reader's rendering seam; the screen/hook/store/controls
- * are unchanged (same PdfViewportProps).
+ * and the zoom transform). Concrete implementation behind the reader's rendering
+ * seam; the screen/hook/store/controls drive it through PdfViewportProps.
  *
  * Requires a dev build (native module) — does NOT run in Expo Go.
  *
- * STAGE 1 (rendering parity): continuous = the library's vertical `Pdf` scroller;
- * horizontal/book = a paged horizontal FlatList of single `PdfView` pages; draw mode
- * (frozen) = a single fit page for the stroke overlay. Smooth shared-value zoom, the
- * glued per-page stroke overlay, and the page-curl land in stages 2-3.
+ * Zoom model: a center-anchored scale + screen-space pan, driven by the SAME
+ * `zoom`/`pan` the +/- buttons and the two-finger pinch/pan gestures feed. The
+ * exact-same transform is mirrored onto the Skia stroke overlay (DrawingCanvas) so
+ * saved strokes track the page under zoom + pan. One-finger drags stay with the
+ * native scroller (scroll / page-turn); two fingers zoom and move — no conflict.
+ *
+ * Continuous = the library's vertical `Pdf` scroller (horizontal pan only — vertical
+ * is the scroll axis); horizontal/book = a paged horizontal FlatList of single
+ * `PdfView` pages (2-D pan); draw mode (frozen) = a single fit page beneath the
+ * stroke overlay (center zoom, no pan — the overlay owns the pinch there).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   type NativeScrollEvent,
@@ -23,23 +28,32 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Pdf, PdfUtil, PdfView, type PageMeasurement, type PdfRef } from 'react-native-pdf-light';
 
 import { useTheme } from '@/hooks/use-theme';
 import type { ReaderScrollMode } from '@/store/reader.store';
 import type { PdfFile } from '@/types/domain';
+import { clamp } from '@/utils/format';
+
+import { ZOOM } from '../hooks/use-reader';
 
 export interface PdfViewportProps {
   document: PdfFile;
   /** Controlled page (1-based) — jumps the renderer when changed via controls. */
   page: number;
-  /** Controlled zoom — driven by the zoom controls (applied in a later stage). */
+  /** Controlled zoom (1..3) — driven by the zoom controls + pinch gesture. */
   zoom: number;
+  /** Controlled pan offset (screen px) of the zoomed page. */
+  panX: number;
+  panY: number;
   scrollMode: ReaderScrollMode;
   /** Freeze scrolling (draw mode) so the stroke overlay maps to a stable page. */
   frozen?: boolean;
-  /** Renderer reported a new zoom (pinch) — wired in a later stage. */
+  /** Renderer reported a new zoom (pinch). */
   onZoomChange: (zoom: number) => void;
+  /** Two-finger pan moved the zoomed page. */
+  onPanChange: (x: number, y: number) => void;
   /** Renderer scrolled/paged to a different page. */
   onPageChange: (page: number) => void;
   /** Renderer finished loading and knows the page count. */
@@ -52,8 +66,13 @@ export interface PdfViewportProps {
 export function PdfViewport({
   document,
   page,
+  zoom,
+  panX,
+  panY,
   scrollMode,
   frozen = false,
+  onZoomChange,
+  onPanChange,
   onPageChange,
   onLoadComplete,
   onTap,
@@ -73,6 +92,20 @@ export function PdfViewport({
 
   const isVertical = scrollMode === 'continuous' && !frozen;
 
+  // How far the magnified page may be dragged before its edges enter the frame.
+  const maxPanX = Math.max(0, ((zoom - 1) * width) / 2);
+  const maxPanY = Math.max(0, ((zoom - 1) * height) / 2);
+
+  // Latest values for the gesture worklets/JS callbacks (read synchronously).
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const pinchStart = useRef(zoom);
+  const panRef = useRef({ x: panX, y: panY });
+  panRef.current = { x: panX, y: panY };
+  const panStart = useRef({ x: panX, y: panY });
+  const boundsRef = useRef({ x: maxPanX, y: maxPanY, vertical: isVertical });
+  boundsRef.current = { x: maxPanX, y: maxPanY, vertical: isVertical };
+
   // Page count for the paged renderer (vertical's <Pdf> learns it via onLoadComplete).
   useEffect(() => {
     let active = true;
@@ -87,6 +120,14 @@ export function PdfViewport({
       active = false;
     };
   }, [source, onLoadComplete, onError]);
+
+  // Keep the stored pan within bounds as zoom changes — snaps back to 0 at zoom 1
+  // (no panning an un-zoomed page) and re-clamps when zooming out.
+  useEffect(() => {
+    const cx = clamp(panX, -maxPanX, maxPanX);
+    const cy = isVertical ? 0 : clamp(panY, -maxPanY, maxPanY);
+    if (cx !== panX || cy !== panY) onPanChange(cx, cy);
+  }, [zoom, maxPanX, maxPanY, panX, panY, isVertical, onPanChange]);
 
   const reportPage = useCallback(
     (next: number) => {
@@ -135,57 +176,101 @@ export function PdfViewport({
     [onError],
   );
 
+  // Two-finger pinch (zoom) + two-finger pan (move), composed simultaneously. Both
+  // need 2 pointers, so 1-finger scroll / page-turn / tap pass straight through to
+  // the native scroller and the Pressable. Pinch and pan feed the SAME shared
+  // zoom/pan the controls use and the stroke overlay mirrors.
+  const gesture = useMemo(() => {
+    const pinch = Gesture.Pinch()
+      .runOnJS(true)
+      .onStart(() => {
+        pinchStart.current = zoomRef.current;
+      })
+      .onUpdate((e) => {
+        onZoomChange(clamp(pinchStart.current * e.scale, ZOOM.min, ZOOM.max));
+      });
+
+    const pan = Gesture.Pan()
+      .runOnJS(true)
+      .minPointers(2)
+      .onStart(() => {
+        panStart.current = panRef.current;
+      })
+      .onUpdate((e) => {
+        const b = boundsRef.current;
+        const nx = clamp(panStart.current.x + e.translationX, -b.x, b.x);
+        const ny = b.vertical ? 0 : clamp(panStart.current.y + e.translationY, -b.y, b.y);
+        onPanChange(nx, ny);
+      });
+
+    return Gesture.Simultaneous(pinch, pan);
+  }, [onZoomChange, onPanChange]);
+
   const background = { backgroundColor: colors.background };
+  // Center-anchored scale (RN's default transform origin) + screen-space pan — the
+  // exact transform DrawingCanvas mirrors so the page and strokes move together.
+  // Continuous pans horizontally only (vertical is the scroll axis).
+  const verticalZoomStyle = { transform: [{ translateX: panX }, { scale: zoom }] };
+  const pageZoomStyle = { transform: [{ translateX: panX }, { translateY: panY }, { scale: zoom }] };
 
   // Draw mode: a single fit page beneath the stroke overlay (rendered by the screen).
+  // The overlay owns the pinch here; the page just mirrors `zoom` (center-anchored,
+  // no pan) so the two stay aligned while drawing.
   if (frozen) {
     return (
       <View style={[styles.viewport, background]}>
-        <PdfView source={source} page={page - 1} resizeMode="contain" style={styles.page} />
+        <PdfView source={source} page={page - 1} resizeMode="contain" style={{ flex: 1, transform: [{ scale: zoom }] }} />
       </View>
     );
   }
 
   if (isVertical) {
     return (
-      <Pressable style={[styles.viewport, background]} onPress={onTap}>
-        <Pdf
-          ref={pdfRef}
-          source={source}
-          onLoadComplete={onLoadComplete}
-          onMeasurePages={(m) => (measurements.current = m)}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          onError={onPdfError}
-        />
-      </Pressable>
+      <GestureDetector gesture={gesture}>
+        <Pressable style={[styles.viewport, background, verticalZoomStyle]} onPress={onTap}>
+          <Pdf
+            ref={pdfRef}
+            source={source}
+            onLoadComplete={onLoadComplete}
+            onMeasurePages={(m) => (measurements.current = m)}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            onError={onPdfError}
+          />
+        </Pressable>
+      </GestureDetector>
     );
   }
 
-  // Paged (horizontal / book): one page per screen, swipe to turn.
+  // Paged (horizontal / book): one page per screen, swipe to turn. The zoom lives on
+  // the per-page content (not the FlatList) so paging snaps stay 1:1 with `width`.
   return (
-    <Pressable style={[styles.viewport, background]} onPress={onTap}>
-      <FlatList
-        ref={listRef}
-        data={Array.from({ length: pageCount }, (_, i) => i)}
-        keyExtractor={(i) => String(i)}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        initialScrollIndex={Math.max(0, page - 1)}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        onMomentumScrollEnd={onMomentumEnd}
-        renderItem={({ item }) => (
-          <View style={{ width, height }}>
-            <PdfView source={source} page={item} resizeMode="contain" style={styles.page} />
-          </View>
-        )}
-      />
-    </Pressable>
+    <GestureDetector gesture={gesture}>
+      <Pressable style={[styles.viewport, background]} onPress={onTap}>
+        <FlatList
+          ref={listRef}
+          data={Array.from({ length: pageCount }, (_, i) => i)}
+          keyExtractor={(i) => String(i)}
+          horizontal
+          pagingEnabled
+          // Lock page-turning while zoomed so a two-finger pan moves within the
+          // page instead of racing the pager; zoom back to 1x to navigate.
+          scrollEnabled={zoom <= 1}
+          showsHorizontalScrollIndicator={false}
+          initialScrollIndex={Math.max(0, page - 1)}
+          getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          onMomentumScrollEnd={onMomentumEnd}
+          renderItem={({ item }) => (
+            <View style={{ width, height }}>
+              <PdfView source={source} page={item} resizeMode="contain" style={{ flex: 1, ...pageZoomStyle }} />
+            </View>
+          )}
+        />
+      </Pressable>
+    </GestureDetector>
   );
 }
 
 const styles = StyleSheet.create({
   viewport: { flex: 1 },
-  page: { flex: 1 },
 });

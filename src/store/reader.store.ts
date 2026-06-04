@@ -42,6 +42,9 @@ interface ReaderState {
   currentPdf: PdfFile | null;
   currentPage: number;
   zoom: number;
+  /** Pan offset (screen px) of the zoomed page; 0 when not zoomed. */
+  panX: number;
+  panY: number;
   /** Effective scroll mode for the open document. */
   scrollMode: ReaderScrollMode;
   /** Immersive reading mode for the open document. */
@@ -54,6 +57,7 @@ interface ReaderState {
   closeDocument: () => void;
   setPage: (page: number) => void;
   setZoom: (zoom: number) => void;
+  setPan: (x: number, y: number) => void;
   setScrollMode: (mode: ReaderScrollMode) => void;
   setReadingMode: (on: boolean) => void;
   setKeepAwake: (on: boolean) => void;
@@ -71,6 +75,8 @@ export const useReaderStore = create<ReaderState>((set, get) => {
     currentPdf: null,
     currentPage: 1,
     zoom: 1,
+    panX: 0,
+    panY: 0,
     scrollMode: DEFAULT_GLOBAL.defaultScrollMode,
     readingMode: false,
     keepAwake: DEFAULT_GLOBAL.keepAwake,
@@ -92,6 +98,8 @@ export const useReaderStore = create<ReaderState>((set, get) => {
         currentPdf: pdf,
         currentPage: 1,
         zoom: 1,
+        panX: 0,
+        panY: 0,
         scrollMode: prefs ? normalizeMode(prefs.scrollMode) : get().defaultScrollMode,
         readingMode: prefs?.readingMode ?? false,
       });
@@ -99,11 +107,13 @@ export const useReaderStore = create<ReaderState>((set, get) => {
     closeDocument: () => set({ currentPdf: null }),
     setPage: (currentPage) => set({ currentPage }),
     setZoom: (zoom) => set({ zoom }),
+    setPan: (panX, panY) => set({ panX, panY }),
 
     // Per-document only: changing one file's layout must NOT change the app
     // default or any other file. Others stay vertical until individually changed.
+    // Switching layout resets zoom/pan so we never land in a half-zoomed pager.
     setScrollMode: (mode) => {
-      set({ scrollMode: mode });
+      set({ scrollMode: mode, zoom: 1, panX: 0, panY: 0 });
       persistDoc({ scrollMode: mode });
     },
 

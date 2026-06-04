@@ -230,7 +230,7 @@ interface ExtractedPage {
   text: string;
 }
 
-async function extractDocument(env: Env, base64: string): Promise<Response> {
+async function extractDocument(env: Env, base64: string, skipOcr = false): Promise<Response> {
   let bytes: Uint8Array;
   try {
     bytes = base64ToBytes(base64);
@@ -252,8 +252,9 @@ async function extractDocument(env: Env, base64: string): Promise<Response> {
   const totalChars = perPage.reduce((sum, p) => sum + p.text.trim().length, 0);
   const sparse = totalPages > 0 && totalChars < totalPages * SPARSE_CHARS_PER_PAGE;
 
-  // Scanned / image PDF → let Gemini OCR it natively.
-  if (sparse) {
+  // Scanned / image PDF → let Gemini OCR it natively, unless the caller opted out
+  // (the app OCRs scanned PDFs on-device and just needs the `scanned` verdict).
+  if (sparse && !skipOcr) {
     const result = await callGemini(env, {
       contents: [
         {
@@ -288,6 +289,8 @@ interface AiBody {
   messages?: { role: string; content: string }[];
   document?: { name?: string; base64?: string };
   question?: string;
+  /** When true, /extract skips the Gemini OCR fallback (app OCRs scanned on-device). */
+  skipOcr?: boolean;
 }
 
 export default {
@@ -308,7 +311,7 @@ export default {
       switch (path) {
         case '/extract': {
           if (!body.document?.base64) return fail('ai/bad-request', 'Missing document.base64.', 400);
-          return await extractDocument(env, body.document.base64);
+          return await extractDocument(env, body.document.base64, body.skipOcr === true);
         }
         case '/ai': {
           if (!body.task) return fail('ai/bad-request', 'Missing task.', 400);

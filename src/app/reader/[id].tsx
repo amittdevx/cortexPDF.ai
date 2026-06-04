@@ -93,11 +93,13 @@ export default function ReaderScreen() {
     [reader],
   );
   // Draw mode hides the chrome for the drawing toolbar; the viewport freezes to a
-  // single page (PdfViewport handles the lock via the `frozen` prop).
+  // single page (PdfViewport handles the lock via the `frozen` prop). Reset pan so
+  // the frozen (center-only) page doesn't jump away from a panned reading position.
   const enterDraw = useCallback(() => {
+    reader.setPan(0, 0);
     setChromeVisible(false);
     setDrawMode(true);
-  }, []);
+  }, [reader]);
   const exitDraw = useCallback(() => {
     setDrawMode(false);
     setChromeVisible(!readingMode);
@@ -146,18 +148,22 @@ export default function ReaderScreen() {
         document={reader.document}
         page={reader.page}
         zoom={reader.zoom}
+        panX={reader.panX}
+        panY={reader.panY}
         scrollMode={reader.scrollMode}
         frozen={drawMode}
         onZoomChange={reader.setZoom}
+        onPanChange={reader.setPan}
         onPageChange={reader.goToPage}
         onLoadComplete={reader.reportPageCount}
         onTap={drawMode ? undefined : toggleChrome}
         onError={setRenderError}
       />
 
-      {/* Saved strokes stay visible over the page when not actively drawing. */}
+      {/* Saved strokes stay visible over the page when not actively drawing —
+          mirroring the viewport's zoom + pan so they track the page. */}
       {!drawMode && drawing.strokes.length > 0 ? (
-        <DrawingCanvas readOnly strokes={drawing.strokes} tool={penTool} color={penColor} width={penWidth} zoom={reader.zoom} onZoomChange={reader.setZoom} onCommit={drawing.addStroke} />
+        <DrawingCanvas readOnly strokes={drawing.strokes} tool={penTool} color={penColor} width={penWidth} zoom={reader.zoom} panX={reader.panX} panY={reader.panY} onZoomChange={reader.setZoom} onCommit={drawing.addStroke} />
       ) : null}
 
       {/* Reading mode: a subtle warm tint for comfortable, distraction-free reading. */}
@@ -215,6 +221,8 @@ export default function ReaderScreen() {
               onZoomIn={reader.zoomIn}
               onZoomOut={reader.zoomOut}
               onResetZoom={reader.resetZoom}
+              readingMode={reader.readingMode}
+              onToggleReadingMode={() => reader.setReadingMode(!reader.readingMode)}
               onOpenOptions={() => setOptionsVisible(true)}
               onOpenBookmarks={() => setBookmarksVisible(true)}
               onOpenPages={() => setPagesVisible(true)}
