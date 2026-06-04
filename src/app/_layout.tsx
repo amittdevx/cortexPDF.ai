@@ -7,16 +7,15 @@
  * frame settles.
  */
 
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 import { ErrorBoundary } from '@/components';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { useBootstrap } from '@/hooks/use-bootstrap';
 import { useTheme } from '@/hooks/use-theme';
 import { ThemeProvider } from '@/theme';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   return (
